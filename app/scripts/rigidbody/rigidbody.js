@@ -171,7 +171,7 @@
       for (k in _ref) {
         p = _ref[k];
         if (p.position.y < 0) {
-          _results.push(p.position.setY(0));
+          _results.push(p.position.setY(10));
         } else {
           _results.push(void 0);
         }

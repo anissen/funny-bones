@@ -101,7 +101,7 @@ class RigidBody
   constraintHack: ->
     for k, p of @particles
       if p.position.y < 0
-        p.position.setY 0
+        p.position.setY 10
 
 
 window.Particle = Particle
