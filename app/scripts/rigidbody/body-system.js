@@ -61,18 +61,32 @@
   };
 
   $(function() {
-    var gui, line, lineGeo, lineLength, lineMat, options;
+    var cube, cubeGeometry, cubeMaterial, groundGeo, groundMesh, groundSize, gui, line, lineGeo, lineLengthHalf, lineMat, options;
     options = {
       cameraControls: true,
       stats: false
     };
     world = threeBox($("#three-placeholder").get(0), options);
-    lineLength = 200;
+    groundSize = 150;
+    groundGeo = new THREE.PlaneGeometry(groundSize, groundSize);
+    groundMesh = new THREE.Mesh(groundGeo, new THREE.MeshBasicMaterial({}));
+    groundMesh.rotation.x -= Math.PI / 2;
+    groundMesh.position.y -= 0.3;
+    world.add(groundMesh);
+    cubeGeometry = new THREE.CubeGeometry(groundSize, groundSize, groundSize);
+    cubeMaterial = new THREE.MeshBasicMaterial({
+      color: 0x0000ff,
+      wireframe: true
+    });
+    cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+    cube.position.y += groundSize / 2;
+    world.add(cube);
+    lineLengthHalf = groundSize / 2;
     lineGeo = new THREE.Geometry();
-    lineGeo.vertices.push(new THREE.Vector3(-lineLength, 0, 0), new THREE.Vector3(lineLength, 0, 0), new THREE.Vector3(0, -lineLength, 0), new THREE.Vector3(0, lineLength, 0), new THREE.Vector3(0, 0, -lineLength), new THREE.Vector3(0, 0, lineLength));
+    lineGeo.vertices.push(new THREE.Vector3(-lineLengthHalf, 0, 0), new THREE.Vector3(lineLengthHalf, 0, 0), new THREE.Vector3(0, -lineLengthHalf, 0), new THREE.Vector3(0, lineLengthHalf, 0), new THREE.Vector3(0, 0, -lineLengthHalf), new THREE.Vector3(0, 0, lineLengthHalf));
     lineMat = new THREE.LineBasicMaterial({
       color: 0x000000,
-      lineWidth: 1
+      lineWidth: 2
     });
     line = new THREE.Line(lineGeo, lineMat);
     line.type = THREE.Lines;
@@ -103,7 +117,7 @@
       return alert('Error!!1! ' + err);
     });
     gui = new dat.GUI();
-    gui.add(settings, 'gravity', -10, 10);
+    gui.add(settings, 'gravity', -20.0, 20.0);
     return gui.add(settings, 'explode');
   });
 
