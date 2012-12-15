@@ -37,6 +37,24 @@ alignCylinderToParticles = (cylinder, p1, p2) ->
   cylinder.matrix.multiplySelf(rotObjectMatrix)      # post-multiply
   cylinder.rotation.setEulerFromRotationMatrix(cylinder.matrix)
 
+sphereMaterial = new THREE.MeshLambertMaterial(
+  ambient: 0xFFFFFF
+  color: 0x0000FF
+)
+
+sphereSelectedMaterial = new THREE.MeshLambertMaterial(
+  ambient: 0xFFFFFF
+  color: 0x00CC00
+)
+
+cylinderMaterial = new THREE.MeshBasicMaterial(
+  color: 0xFF0000
+)
+
+cylinderSelectedMaterial = new THREE.MeshBasicMaterial(
+  color: 0x00CC00
+)
+
 readJson = (data) ->
   if scene? then world.remove scene
 
@@ -46,10 +64,7 @@ readJson = (data) ->
   radius = 1.0 #0.015
   segments = 8
   rings = 8
-  sphereMaterial = new THREE.MeshLambertMaterial(
-    ambient: 0xFFFFFF
-    color: 0x0000FF
-  )
+
   lineMat = new THREE.LineBasicMaterial(
     ambient: 0xFFFFFF
     color: 0xFF0000
@@ -77,7 +92,6 @@ readJson = (data) ->
     cylinderRadius = 0.5
     cylinderLength = length
     cylinderGeo = new THREE.CylinderGeometry(cylinderRadius, cylinderRadius, cylinderLength, 6, 1, false)
-    cylinderMaterial = new THREE.MeshBasicMaterial({color: 0xff0000, wireframe: false})
     cylinder = new THREE.Mesh(cylinderGeo, cylinderMaterial)
     cylinder.p1 = p1
     cylinder.p2 = p2
@@ -90,6 +104,39 @@ readJson = (data) ->
 
   rigidbody.load data, createParticle, createCylinderConstraint
   scene.add rigidbody.getScene()
+
+  world.enableDomEvent()
+
+  # bind some event on it
+  tQuery('sphere')
+    .on('mouseover', (event) ->
+      event.target.material = sphereSelectedMaterial
+    )
+    .on('mouseout', (event) ->
+      event.target.material = sphereMaterial
+    )
+    .on('mousedown', (event) ->
+      event.target.position.y += 10
+    )
+
+
+  tQuery('cylinder')
+    .on('mouseover', (event) ->
+      event.target.material = cylinderSelectedMaterial
+    )
+    .on('mouseout', (event) ->
+      event.target.material = cylinderMaterial
+    )
+    .on('mousedown', (event) ->
+      event.target.p1.position.y += 10
+      event.target.p2.position.y += 10
+    )
+
+  ###
+  tQuery(world.tScene()).on('click', (event) ->
+    console.log('click on scene', event);
+  )
+  ###
 
 $ ->
   options =
@@ -106,7 +153,6 @@ $ ->
   world.add groundMesh
 
 
-
   cubeGeometry = new THREE.CubeGeometry(groundSize, groundSize, groundSize)
   cubeMaterial = new THREE.MeshBasicMaterial({color: 0x0000ff, wireframe: true})
   cube = new THREE.Mesh(cubeGeometry, cubeMaterial)
@@ -114,6 +160,7 @@ $ ->
   world.add cube
 
 
+  ###
   lineLengthHalf = groundSize / 2
   lineGeo = new THREE.Geometry()
   lineGeo.vertices.push new THREE.Vector3(-lineLengthHalf, 0, 0),
@@ -129,6 +176,7 @@ $ ->
   line = new THREE.Line(lineGeo, lineMat)
   line.type = THREE.Lines
   world.add line
+  ###
 
   tQuery.createAmbientLight().addTo(world).color 0x444444
   tQuery.createDirectionalLight().addTo(world).position(-1, 1, 1).color(0xFF88BB).intensity 3
@@ -141,6 +189,9 @@ $ ->
   )
 
   world.start()
+
+
+
 
   $.ajax(
     url: 'data/hitman.json',

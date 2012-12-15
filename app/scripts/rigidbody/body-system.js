@@ -1,5 +1,5 @@
 (function() {
-  var Settings, alignCylinderToParticles, constraintObjects, cylinder, dnd, handleDnD, readJson, rigidbody, scene, settings, v, world;
+  var Settings, alignCylinderToParticles, constraintObjects, cylinder, cylinderMaterial, cylinderSelectedMaterial, dnd, handleDnD, readJson, rigidbody, scene, settings, sphereMaterial, sphereSelectedMaterial, v, world;
 
   v = function(x, y, z) {
     return new THREE.Vector3(x, y, z);
@@ -42,8 +42,26 @@
     return cylinder.rotation.setEulerFromRotationMatrix(cylinder.matrix);
   };
 
+  sphereMaterial = new THREE.MeshLambertMaterial({
+    ambient: 0xFFFFFF,
+    color: 0x0000FF
+  });
+
+  sphereSelectedMaterial = new THREE.MeshLambertMaterial({
+    ambient: 0xFFFFFF,
+    color: 0x00CC00
+  });
+
+  cylinderMaterial = new THREE.MeshBasicMaterial({
+    color: 0xFF0000
+  });
+
+  cylinderSelectedMaterial = new THREE.MeshBasicMaterial({
+    color: 0x00CC00
+  });
+
   readJson = function(data) {
-    var createCylinderConstraint, createLineConstraint, createParticle, lineMat, radius, rings, segments, sphereMaterial;
+    var createCylinderConstraint, createLineConstraint, createParticle, lineMat, radius, rings, segments;
     if (scene != null) {
       world.remove(scene);
     }
@@ -52,10 +70,6 @@
     radius = 1.0;
     segments = 8;
     rings = 8;
-    sphereMaterial = new THREE.MeshLambertMaterial({
-      ambient: 0xFFFFFF,
-      color: 0x0000FF
-    });
     lineMat = new THREE.LineBasicMaterial({
       ambient: 0xFFFFFF,
       color: 0xFF0000,
@@ -76,15 +90,11 @@
       return new THREE.Line(lineGeo, lineMat);
     };
     createCylinderConstraint = function(c, p1, p2) {
-      var cylinderGeo, cylinderLength, cylinderMaterial, cylinderRadius, length;
+      var cylinderGeo, cylinderLength, cylinderRadius, length;
       length = p1.position.distanceTo(p2.position);
       cylinderRadius = 0.5;
       cylinderLength = length;
       cylinderGeo = new THREE.CylinderGeometry(cylinderRadius, cylinderRadius, cylinderLength, 6, 1, false);
-      cylinderMaterial = new THREE.MeshBasicMaterial({
-        color: 0xff0000,
-        wireframe: false
-      });
       cylinder = new THREE.Mesh(cylinderGeo, cylinderMaterial);
       cylinder.p1 = p1;
       cylinder.p2 = p2;
@@ -93,11 +103,33 @@
       return cylinder;
     };
     rigidbody.load(data, createParticle, createCylinderConstraint);
-    return scene.add(rigidbody.getScene());
+    scene.add(rigidbody.getScene());
+    world.enableDomEvent();
+    tQuery('sphere').on('mouseover', function(event) {
+      return event.target.material = sphereSelectedMaterial;
+    }).on('mouseout', function(event) {
+      return event.target.material = sphereMaterial;
+    }).on('mousedown', function(event) {
+      return event.target.position.y += 10;
+    });
+    return tQuery('cylinder').on('mouseover', function(event) {
+      return event.target.material = cylinderSelectedMaterial;
+    }).on('mouseout', function(event) {
+      return event.target.material = cylinderMaterial;
+    }).on('mousedown', function(event) {
+      event.target.p1.position.y += 10;
+      return event.target.p2.position.y += 10;
+    });
+    /*
+      tQuery(world.tScene()).on('click', (event) ->
+        console.log('click on scene', event);
+      )
+    */
+
   };
 
   $(function() {
-    var cube, cubeGeometry, cubeMaterial, groundGeo, groundMesh, groundSize, gui, line, lineGeo, lineLengthHalf, lineMat, options;
+    var cube, cubeGeometry, cubeMaterial, groundGeo, groundMesh, groundSize, gui, options;
     options = {
       cameraControls: true,
       stats: false
@@ -117,16 +149,24 @@
     cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
     cube.position.y += groundSize / 2;
     world.add(cube);
-    lineLengthHalf = groundSize / 2;
-    lineGeo = new THREE.Geometry();
-    lineGeo.vertices.push(new THREE.Vector3(-lineLengthHalf, 0, 0), new THREE.Vector3(lineLengthHalf, 0, 0), new THREE.Vector3(0, -lineLengthHalf, 0), new THREE.Vector3(0, lineLengthHalf, 0), new THREE.Vector3(0, 0, -lineLengthHalf), new THREE.Vector3(0, 0, lineLengthHalf));
-    lineMat = new THREE.LineBasicMaterial({
-      color: 0x000000,
-      lineWidth: 2
-    });
-    line = new THREE.Line(lineGeo, lineMat);
-    line.type = THREE.Lines;
-    world.add(line);
+    /*
+      lineLengthHalf = groundSize / 2
+      lineGeo = new THREE.Geometry()
+      lineGeo.vertices.push new THREE.Vector3(-lineLengthHalf, 0, 0),
+                            new THREE.Vector3(lineLengthHalf, 0, 0),
+                            new THREE.Vector3(0, -lineLengthHalf, 0),
+                            new THREE.Vector3(0, lineLengthHalf, 0),
+                            new THREE.Vector3(0, 0, -lineLengthHalf),
+                            new THREE.Vector3(0, 0, lineLengthHalf)
+      lineMat = new THREE.LineBasicMaterial(
+        color: 0x000000
+        lineWidth: 2
+      )
+      line = new THREE.Line(lineGeo, lineMat)
+      line.type = THREE.Lines
+      world.add line
+    */
+
     tQuery.createAmbientLight().addTo(world).color(0x444444);
     tQuery.createDirectionalLight().addTo(world).position(-1, 1, 1).color(0xFF88BB).intensity(3);
     tQuery.createDirectionalLight().addTo(world).position(1, 1, -1).color(0x4444FF).intensity(2);
