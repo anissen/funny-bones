@@ -1,18 +1,21 @@
 v = (x, y, z) ->
   new THREE.Vector3(x, y, z)
-#v3 = (pos) ->
-#  new THREE.Vertex(new THREE.Vector3(pos.x, pos.y, pos.z))
-# Combined options object
 
-#var object = tQuery.createTorus().addTo(scene);
+Settings = ->
+  #@message = "dat.gui"
+  @gravity = -9.82
+  #@displayOutline = false
+  @explode = -> alert 'Bang!'
+  @
+
+settings = new Settings()
 
 world = null
 scene = null
-rigidbody = new RigidBody()
+rigidbody = new RigidBody settings
 constraintObjects = []
 
 
-#  DRAW LINES
 readJson = (data) ->
   if scene? then world.remove scene
 
@@ -31,30 +34,6 @@ readJson = (data) ->
     color: 0xFF0000
     lineWidth: 1
   )
-  ###
-  particleMap = {}
-  _.each data.rigidbody.particle, (p) ->
-    sphere = new THREE.Mesh(new THREE.SphereGeometry(radius, segments, rings), sphereMaterial)
-    p.position.x /= 100
-    p.position.y /= 100
-    p.position.z /= 100
-    #sphere.position = p.position
-
-    particle = new Particle p, sphere
-    particleMap[p.id] = particle
-    scene.add sphere
-    window.particle = particle
-
-  _.each data.rigidbody.constraint, (c) ->
-    p1 = particleMap[c.particle1]
-    p2 = particleMap[c.particle2]
-    lineGeo = new THREE.Geometry()
-    lineGeo.vertices.push v3(p1.settings.position), v3(p2.settings.position)
-    line = new THREE.Line(lineGeo, lineMat)
-    scene.add line
-  ###
-  #sphereGeo = new THREE.Mesh(new THREE.SphereGeometry(radius, segments, rings), sphereMaterial)
-  #sphereGeo = new THREE.SphereGeometry(radius, segments, rings)
 
   createParticle = (p) ->
     sphereMesh = new THREE.Mesh(
@@ -117,6 +96,14 @@ $ ->
   )
   .done((data) -> readJson(data))
   .fail((err) -> alert('Error!!1! ' + err))
+
+
+  gui = new dat.GUI()
+  #gui.add settings, 'message'
+  gui.add settings, 'gravity', -10, 10
+  #gui.add settings, 'displayOutline'
+  gui.add settings, 'explode'
+
 
 handleDnD = (files) ->
   f = files[0]

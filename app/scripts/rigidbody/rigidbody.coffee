@@ -19,7 +19,7 @@ class Constraint
       @mesh.position = @settings.position
 
 class RigidBody
-  constructor: ->
+  constructor: (@settings) ->
     @bodyScene = new THREE.Scene()
     @particles = {}
     @constraints = []
@@ -52,7 +52,7 @@ class RigidBody
     @constraintHack()
   accumulateForces: ->
     for k, p of @particles
-      p.accumulatedForce.addSelf(new THREE.Vector3(0.0, -0.00000982, 0.0))
+      p.accumulatedForce.addSelf(new THREE.Vector3(0.0, @settings.gravity / 100, 0.0))
   verlet: ->
     # Calc deltaTime powered by 2.
     step2 = @step * @step
@@ -103,6 +103,7 @@ class RigidBody
       if p.position.y < 0
         p.position.setY 0
 
+# http://web.archive.org/web/20080410171619/http://www.teknikus.dk/tj/gdc2001.htm
 
 window.Particle = Particle
 window.Constraint = Constraint

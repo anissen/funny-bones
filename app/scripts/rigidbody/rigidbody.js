@@ -52,7 +52,8 @@
 
   RigidBody = (function() {
 
-    function RigidBody() {
+    function RigidBody(settings) {
+      this.settings = settings;
       this.bodyScene = new THREE.Scene();
       this.particles = {};
       this.constraints = [];
@@ -114,7 +115,7 @@
       _results = [];
       for (k in _ref) {
         p = _ref[k];
-        _results.push(p.accumulatedForce.addSelf(new THREE.Vector3(0.0, -0.00000982, 0.0)));
+        _results.push(p.accumulatedForce.addSelf(new THREE.Vector3(0.0, this.settings.gravity / 100, 0.0)));
       }
       return _results;
     };

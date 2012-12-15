@@ -1,15 +1,25 @@
 (function() {
-  var constraintObjects, dnd, handleDnD, readJson, rigidbody, scene, v, world;
+  var Settings, constraintObjects, dnd, handleDnD, readJson, rigidbody, scene, settings, v, world;
 
   v = function(x, y, z) {
     return new THREE.Vector3(x, y, z);
   };
 
+  Settings = function() {
+    this.gravity = -9.82;
+    this.explode = function() {
+      return alert('Bang!');
+    };
+    return this;
+  };
+
+  settings = new Settings();
+
   world = null;
 
   scene = null;
 
-  rigidbody = new RigidBody();
+  rigidbody = new RigidBody(settings);
 
   constraintObjects = [];
 
@@ -32,29 +42,6 @@
       color: 0xFF0000,
       lineWidth: 1
     });
-    /*
-      particleMap = {}
-      _.each data.rigidbody.particle, (p) ->
-        sphere = new THREE.Mesh(new THREE.SphereGeometry(radius, segments, rings), sphereMaterial)
-        p.position.x /= 100
-        p.position.y /= 100
-        p.position.z /= 100
-        #sphere.position = p.position
-    
-        particle = new Particle p, sphere
-        particleMap[p.id] = particle
-        scene.add sphere
-        window.particle = particle
-    
-      _.each data.rigidbody.constraint, (c) ->
-        p1 = particleMap[c.particle1]
-        p2 = particleMap[c.particle2]
-        lineGeo = new THREE.Geometry()
-        lineGeo.vertices.push v3(p1.settings.position), v3(p2.settings.position)
-        line = new THREE.Line(lineGeo, lineMat)
-        scene.add line
-    */
-
     createParticle = function(p) {
       var sphereMesh;
       sphereMesh = new THREE.Mesh(new THREE.SphereGeometry(radius, segments, rings), sphereMaterial);
@@ -74,7 +61,7 @@
   };
 
   $(function() {
-    var line, lineGeo, lineLength, lineMat, options;
+    var gui, line, lineGeo, lineLength, lineMat, options;
     options = {
       cameraControls: true,
       stats: false
@@ -106,7 +93,7 @@
       return _results;
     });
     world.start();
-    return $.ajax({
+    $.ajax({
       url: 'data/hitman.json',
       dataType: 'JSON',
       type: 'GET'
@@ -115,6 +102,9 @@
     }).fail(function(err) {
       return alert('Error!!1! ' + err);
     });
+    gui = new dat.GUI();
+    gui.add(settings, 'gravity', -10, 10);
+    return gui.add(settings, 'explode');
   });
 
   handleDnD = function(files) {
