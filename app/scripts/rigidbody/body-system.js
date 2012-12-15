@@ -129,17 +129,20 @@
   };
 
   $(function() {
-    var cube, cubeGeometry, cubeMaterial, groundGeo, groundMesh, groundSize, gui, options;
+    var cube, cubeGeometry, cubeMaterial, groundGeo, groundMesh, groundSize, gui, options, tiles;
     options = {
       cameraControls: true,
       stats: false
     };
     world = threeBox($("#three-placeholder").get(0), options);
     groundSize = 150;
-    groundGeo = new THREE.PlaneGeometry(groundSize, groundSize);
-    groundMesh = new THREE.Mesh(groundGeo, new THREE.MeshBasicMaterial({}));
+    tiles = 10;
+    groundGeo = new THREE.PlaneGeometry(groundSize, groundSize, tiles, tiles);
+    groundMesh = new THREE.Mesh(groundGeo, new THREE.MeshBasicMaterial({
+      color: 0x555555,
+      wireframe: true
+    }));
     groundMesh.rotation.x -= Math.PI / 2;
-    groundMesh.position.y -= 0.3;
     world.add(groundMesh);
     cubeGeometry = new THREE.CubeGeometry(groundSize, groundSize, groundSize);
     cubeMaterial = new THREE.MeshBasicMaterial({
