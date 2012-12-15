@@ -14,7 +14,28 @@ world = null
 scene = null
 rigidbody = new RigidBody settings
 constraintObjects = []
+window.cylinder = cylinder = null
 
+alignCylinderToParticles = (cylinder, p1, p2) ->
+  length = p1.position.distanceTo(p2.position)
+  v = new THREE.Vector3()
+  v = v.sub(p2.position, p1.position)
+  center = v.clone().add(p1.position, v.clone().divideScalar(2))
+  cylinder.position = center
+
+  z = new THREE.Vector3(0,1,0)
+
+  # Get CROSS product (the axis of rotation)
+  t = z.clone().cross(z, v)
+
+  # Get angle. length is magnitude of the vector
+  angle = Math.acos(z.dot(v) / length)
+
+  rotObjectMatrix = new THREE.Matrix4()
+  rotObjectMatrix.makeRotationAxis(t.normalize(), angle)
+  cylinder.matrix = new THREE.Matrix4()
+  cylinder.matrix.multiplySelf(rotObjectMatrix)      # post-multiply
+  cylinder.rotation.setEulerFromRotationMatrix(cylinder.matrix)
 
 readJson = (data) ->
   if scene? then world.remove scene
@@ -39,20 +60,35 @@ readJson = (data) ->
     sphereMesh = new THREE.Mesh(
       new THREE.SphereGeometry(radius, segments, rings),
       sphereMaterial)
-    #p.settings.position.x /= 100
-    #p.settings.position.y /= 100
-    #p.settings.position.z /= 100
     sphereMesh.position = p.position
     sphereMesh
 
-  createConstraint = (c, p1, p2) ->
+  createLineConstraint = (c, p1, p2) ->
     lineGeo = new THREE.Geometry()
     lineGeo.vertices.push p1.position, p2.position
     lineGeo.dynamic = true
     constraintObjects.push lineGeo
     new THREE.Line(lineGeo, lineMat)
 
-  rigidbody.load data, createParticle, createConstraint
+  createCylinderConstraint = (c, p1, p2) ->
+    length = p1.position.distanceTo(p2.position)
+
+    #THREE.CylinderGeometry = function ( radiusTop, radiusBottom, height, radiusSegments, heightSegments, openEnded )
+    cylinderRadius = 0.5
+    cylinderLength = length
+    cylinderGeo = new THREE.CylinderGeometry(cylinderRadius, cylinderRadius, cylinderLength, 6, 1, false)
+    cylinderMaterial = new THREE.MeshBasicMaterial({color: 0xff0000, wireframe: false})
+    cylinder = new THREE.Mesh(cylinderGeo, cylinderMaterial)
+    cylinder.p1 = p1
+    cylinder.p2 = p2
+    constraintObjects.push cylinder
+
+    alignCylinderToParticles(cylinder, p1, p2)
+
+    cylinder
+
+
+  rigidbody.load data, createParticle, createCylinderConstraint
   scene.add rigidbody.getScene()
 
 $ ->
@@ -77,6 +113,7 @@ $ ->
   cube.position.y += groundSize / 2
   world.add cube
 
+
   lineLengthHalf = groundSize / 2
   lineGeo = new THREE.Geometry()
   lineGeo.vertices.push new THREE.Vector3(-lineLengthHalf, 0, 0),
@@ -92,6 +129,7 @@ $ ->
   line = new THREE.Line(lineGeo, lineMat)
   line.type = THREE.Lines
   world.add line
+
   tQuery.createAmbientLight().addTo(world).color 0x444444
   tQuery.createDirectionalLight().addTo(world).position(-1, 1, 1).color(0xFF88BB).intensity 3
   tQuery.createDirectionalLight().addTo(world).position(1, 1, -1).color(0x4444FF).intensity 2
@@ -99,7 +137,7 @@ $ ->
   world.loop().hook((delta, now) ->
     rigidbody?.calculate()
     for c in constraintObjects
-      c.verticesNeedUpdate = true
+      alignCylinderToParticles(c, c.p1, c.p2)
   )
 
   world.start()
@@ -122,7 +160,7 @@ $ ->
 
 handleDnD = (files) ->
   f = files[0]
-  alert "Not a JSON file!"  unless f.type.match("application/json")
+  #alert "Not a JSON file!"  unless f.type.match("application/json")
   reader = new FileReader()
   reader.onloadend = (e) ->
     result = JSON.parse(@result)

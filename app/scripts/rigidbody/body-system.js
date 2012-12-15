@@ -1,5 +1,5 @@
 (function() {
-  var Settings, constraintObjects, dnd, handleDnD, readJson, rigidbody, scene, settings, v, world;
+  var Settings, alignCylinderToParticles, constraintObjects, cylinder, dnd, handleDnD, readJson, rigidbody, scene, settings, v, world;
 
   v = function(x, y, z) {
     return new THREE.Vector3(x, y, z);
@@ -23,8 +23,27 @@
 
   constraintObjects = [];
 
+  window.cylinder = cylinder = null;
+
+  alignCylinderToParticles = function(cylinder, p1, p2) {
+    var angle, center, length, rotObjectMatrix, t, z;
+    length = p1.position.distanceTo(p2.position);
+    v = new THREE.Vector3();
+    v = v.sub(p2.position, p1.position);
+    center = v.clone().add(p1.position, v.clone().divideScalar(2));
+    cylinder.position = center;
+    z = new THREE.Vector3(0, 1, 0);
+    t = z.clone().cross(z, v);
+    angle = Math.acos(z.dot(v) / length);
+    rotObjectMatrix = new THREE.Matrix4();
+    rotObjectMatrix.makeRotationAxis(t.normalize(), angle);
+    cylinder.matrix = new THREE.Matrix4();
+    cylinder.matrix.multiplySelf(rotObjectMatrix);
+    return cylinder.rotation.setEulerFromRotationMatrix(cylinder.matrix);
+  };
+
   readJson = function(data) {
-    var createConstraint, createParticle, lineMat, radius, rings, segments, sphereMaterial;
+    var createCylinderConstraint, createLineConstraint, createParticle, lineMat, radius, rings, segments, sphereMaterial;
     if (scene != null) {
       world.remove(scene);
     }
@@ -48,7 +67,7 @@
       sphereMesh.position = p.position;
       return sphereMesh;
     };
-    createConstraint = function(c, p1, p2) {
+    createLineConstraint = function(c, p1, p2) {
       var lineGeo;
       lineGeo = new THREE.Geometry();
       lineGeo.vertices.push(p1.position, p2.position);
@@ -56,7 +75,24 @@
       constraintObjects.push(lineGeo);
       return new THREE.Line(lineGeo, lineMat);
     };
-    rigidbody.load(data, createParticle, createConstraint);
+    createCylinderConstraint = function(c, p1, p2) {
+      var cylinderGeo, cylinderLength, cylinderMaterial, cylinderRadius, length;
+      length = p1.position.distanceTo(p2.position);
+      cylinderRadius = 0.5;
+      cylinderLength = length;
+      cylinderGeo = new THREE.CylinderGeometry(cylinderRadius, cylinderRadius, cylinderLength, 6, 1, false);
+      cylinderMaterial = new THREE.MeshBasicMaterial({
+        color: 0xff0000,
+        wireframe: false
+      });
+      cylinder = new THREE.Mesh(cylinderGeo, cylinderMaterial);
+      cylinder.p1 = p1;
+      cylinder.p2 = p2;
+      constraintObjects.push(cylinder);
+      alignCylinderToParticles(cylinder, p1, p2);
+      return cylinder;
+    };
+    rigidbody.load(data, createParticle, createCylinderConstraint);
     return scene.add(rigidbody.getScene());
   };
 
@@ -102,7 +138,7 @@
       _results = [];
       for (_i = 0, _len = constraintObjects.length; _i < _len; _i++) {
         c = constraintObjects[_i];
-        _results.push(c.verticesNeedUpdate = true);
+        _results.push(alignCylinderToParticles(c, c.p1, c.p2));
       }
       return _results;
     });
@@ -124,9 +160,6 @@
   handleDnD = function(files) {
     var f, reader;
     f = files[0];
-    if (!f.type.match("application/json")) {
-      alert("Not a JSON file!");
-    }
     reader = new FileReader();
     reader.onloadend = function(e) {
       var result;

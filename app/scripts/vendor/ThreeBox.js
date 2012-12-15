@@ -403,7 +403,7 @@ ThreeBox.OrbitControls = function (camera, domElement, options) {
   this.options = tQuery.extend(options, {
     phi: τ/4,
     theta: 0.3,
-    orbit: 200,
+    orbit: 150,
     lookAt: [0, 0, 0],
     speed: 2//,
   });
