@@ -95,12 +95,14 @@ readJson = (data) ->
     sphereMesh.position = p.position
     sphereMesh
 
+  ###
   createLineConstraint = (c, p1, p2) ->
     lineGeo = new THREE.Geometry()
     lineGeo.vertices.push p1.position, p2.position
     lineGeo.dynamic = true
     constraintObjects.push lineGeo
     new THREE.Line(lineGeo, lineMat)
+  ###
 
   createCylinderConstraint = (c, p1, p2) ->
     length = p1.position.distanceTo(p2.position)
@@ -220,8 +222,9 @@ $ ->
       controller.updateDisplay()
   )
 
-  world.start()
+  #world.add tQuery.createText("G").scaleBy(10)
 
+  world.start()
 
 
 
@@ -236,12 +239,14 @@ $ ->
   gui = new dat.GUI()
   optionsFolder = gui.addFolder('Options')
   optionsFolder.add settings, 'running'
+  optionsFolder.open()
 
   gravityFolder = gui.addFolder('Gravity')
   gravityFolder.add settings.gravity, 'enabled'
   gravityFolder.add(settings.gravity, 'x', -20.0, 20.0).step(0.1)
   gravityFolder.add(settings.gravity, 'y', -20.0, 20.0)
   gravityFolder.add(settings.gravity, 'z', -20.0, 20.0)
+  gravityFolder.open()
 
   particleFolder = gui.addFolder('Particle')
   particleFolder.add(particleSettings, 'x').onChange((value) -> selectedParticle?.position.x = value)

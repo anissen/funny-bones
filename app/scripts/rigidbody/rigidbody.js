@@ -81,6 +81,8 @@
 
     RigidBody.prototype.load = function(data, particleCallback, constraintCallback) {
       var c, p, _i, _j, _len, _len1, _ref, _ref1, _results;
+      this.particles = {};
+      this.constraints = [];
       _ref = data.rigidbody.particle;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         p = _ref[_i];

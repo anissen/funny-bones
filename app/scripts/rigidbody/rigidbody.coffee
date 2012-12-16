@@ -38,6 +38,8 @@ class RigidBody
     constraint.length = constraint.p1.position.distanceTo(constraint.p2.position)
     @bodyScene.add constraintCallback(constraint, constraint.p1, constraint.p2)
   load: (data, particleCallback, constraintCallback) ->
+    @particles = {}
+    @constraints = []
     for p in data.rigidbody.particle
       @addParticle new Particle(p), particleCallback
     for c in data.rigidbody.constraint

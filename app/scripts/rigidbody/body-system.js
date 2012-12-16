@@ -85,7 +85,7 @@
   });
 
   readJson = function(data) {
-    var createCylinderConstraint, createLineConstraint, createParticle, lineMat, radius, rings, segments;
+    var createCylinderConstraint, createParticle, lineMat, radius, rings, segments;
     if (scene != null) {
       world.remove(scene);
     }
@@ -105,14 +105,15 @@
       sphereMesh.position = p.position;
       return sphereMesh;
     };
-    createLineConstraint = function(c, p1, p2) {
-      var lineGeo;
-      lineGeo = new THREE.Geometry();
-      lineGeo.vertices.push(p1.position, p2.position);
-      lineGeo.dynamic = true;
-      constraintObjects.push(lineGeo);
-      return new THREE.Line(lineGeo, lineMat);
-    };
+    /*
+      createLineConstraint = (c, p1, p2) ->
+        lineGeo = new THREE.Geometry()
+        lineGeo.vertices.push p1.position, p2.position
+        lineGeo.dynamic = true
+        constraintObjects.push lineGeo
+        new THREE.Line(lineGeo, lineMat)
+    */
+
     createCylinderConstraint = function(c, p1, p2) {
       var cylinderGeo, cylinderLength, cylinderRadius, length;
       length = p1.position.distanceTo(p2.position);
@@ -240,11 +241,13 @@
     gui = new dat.GUI();
     optionsFolder = gui.addFolder('Options');
     optionsFolder.add(settings, 'running');
+    optionsFolder.open();
     gravityFolder = gui.addFolder('Gravity');
     gravityFolder.add(settings.gravity, 'enabled');
     gravityFolder.add(settings.gravity, 'x', -20.0, 20.0).step(0.1);
     gravityFolder.add(settings.gravity, 'y', -20.0, 20.0);
     gravityFolder.add(settings.gravity, 'z', -20.0, 20.0);
+    gravityFolder.open();
     particleFolder = gui.addFolder('Particle');
     particleFolder.add(particleSettings, 'x').onChange(function(value) {
       return selectedParticle != null ? selectedParticle.position.x = value : void 0;

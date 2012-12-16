@@ -27,7 +27,6 @@ module.exports = function( grunt ) {
 
     // compile .scss/.sass to .css using Compass
     compass: {
-      /*
       dist: {
         // http://compass-style.org/help/tutorials/configuration-reference/#configuration-properties
         options: {
@@ -38,7 +37,6 @@ module.exports = function( grunt ) {
           force: true
         }
       }
-      */
     },
 
     // generate application cache manifest
