@@ -1,14 +1,30 @@
 v = (x, y, z) ->
   new THREE.Vector3(x, y, z)
 
+GravitySettings = ->
+  @enabled = true
+  @x = 0.0
+  @y = -9.82
+  @z = 0.0
+
 Settings = ->
-  #@message = "dat.gui"
-  @gravity = -9.82
-  #@displayOutline = false
+  @gravity = new GravitySettings()
   @explode = -> alert 'Bang!'
+  @running = false
   @
 
-settings = new Settings()
+ParticleSettings = ->
+  @x = 0.0
+  @y = 0.0
+  @z = 0.0
+  @
+
+window.settings = settings = new Settings()
+particleSettings = new ParticleSettings()
+gui = null
+particleFolder = null
+
+selectedParticle = null
 
 world = null
 scene = null
@@ -49,6 +65,7 @@ sphereSelectedMaterial = new THREE.MeshLambertMaterial(
 
 cylinderMaterial = new THREE.MeshBasicMaterial(
   color: 0xFF0000
+  opacity: 0.5
 )
 
 cylinderSelectedMaterial = new THREE.MeshBasicMaterial(
@@ -113,10 +130,17 @@ readJson = (data) ->
       event.target.material = sphereSelectedMaterial
     )
     .on('mouseout', (event) ->
+      return if event.target is selectedParticle
       event.target.material = sphereMaterial
     )
-    .on('mousedown', (event) ->
-      event.target.position.y += 10
+    .on('click', (event) ->
+      #console.log event.target.position
+      #console.log particleSettings.x
+      selectedParticle?.material = sphereMaterial
+
+      selectedParticle = event.target
+      selectedParticle.material = sphereSelectedMaterial
+      particleFolder.open()
     )
 
 
@@ -186,6 +210,14 @@ $ ->
     rigidbody?.calculate()
     for c in constraintObjects
       alignCylinderToParticles(c, c.p1, c.p2)
+
+    if selectedParticle?
+      particleSettings.x = selectedParticle.position.x
+      particleSettings.y = selectedParticle.position.y
+      particleSettings.z = selectedParticle.position.z
+
+    for controller in particleFolder.__controllers
+      controller.updateDisplay()
   )
 
   world.start()
@@ -201,13 +233,20 @@ $ ->
   .done((data) -> readJson(data))
   .fail((err) -> alert('Error!!1! ' + err))
 
-
   gui = new dat.GUI()
-  #gui.add settings, 'message'
-  gui.add settings, 'gravity', -20.0, 20.0
-  #gui.add settings, 'displayOutline'
-  gui.add settings, 'explode'
+  optionsFolder = gui.addFolder('Options')
+  optionsFolder.add settings, 'running'
 
+  gravityFolder = gui.addFolder('Gravity')
+  gravityFolder.add settings.gravity, 'enabled'
+  gravityFolder.add(settings.gravity, 'x', -20.0, 20.0).step(0.1)
+  gravityFolder.add(settings.gravity, 'y', -20.0, 20.0)
+  gravityFolder.add(settings.gravity, 'z', -20.0, 20.0)
+
+  particleFolder = gui.addFolder('Particle')
+  particleFolder.add(particleSettings, 'x').onChange((value) -> selectedParticle.position.x = value)
+  particleFolder.add(particleSettings, 'y').onChange((value) -> selectedParticle.position.y = value)
+  particleFolder.add(particleSettings, 'z').onChange((value) -> selectedParticle.position.z = value)
 
 handleDnD = (files) ->
   f = files[0]

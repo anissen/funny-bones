@@ -101,6 +101,9 @@
 
     RigidBody.prototype.calculate = function() {
       var i, _i, _ref;
+      if (!this.settings.running) {
+        return;
+      }
       this.accumulateForces();
       this.verlet();
       for (i = _i = 0, _ref = this.iterations; 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i) {
@@ -110,12 +113,16 @@
     };
 
     RigidBody.prototype.accumulateForces = function() {
-      var k, p, _ref, _results;
+      var gravityVector, k, p, _ref, _results;
+      gravityVector = new THREE.Vector3(this.settings.gravity.x / 1000, this.settings.gravity.y / 1000, this.settings.gravity.z / 1000);
+      if (!this.settings.gravity.enabled) {
+        gravityVector = new THREE.Vector3();
+      }
       _ref = this.particles;
       _results = [];
       for (k in _ref) {
         p = _ref[k];
-        _results.push(p.accumulatedForce = new THREE.Vector3(0.0, this.settings.gravity / 1000, 0.0));
+        _results.push(p.accumulatedForce = gravityVector);
       }
       return _results;
     };

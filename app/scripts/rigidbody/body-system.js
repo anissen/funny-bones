@@ -1,19 +1,42 @@
 (function() {
-  var Settings, alignCylinderToParticles, constraintObjects, cylinder, cylinderMaterial, cylinderSelectedMaterial, dnd, handleDnD, readJson, rigidbody, scene, settings, sphereMaterial, sphereSelectedMaterial, v, world;
+  var GravitySettings, ParticleSettings, Settings, alignCylinderToParticles, constraintObjects, cylinder, cylinderMaterial, cylinderSelectedMaterial, dnd, gui, handleDnD, particleFolder, particleSettings, readJson, rigidbody, scene, selectedParticle, settings, sphereMaterial, sphereSelectedMaterial, v, world;
 
   v = function(x, y, z) {
     return new THREE.Vector3(x, y, z);
   };
 
+  GravitySettings = function() {
+    this.enabled = true;
+    this.x = 0.0;
+    this.y = -9.82;
+    return this.z = 0.0;
+  };
+
   Settings = function() {
-    this.gravity = -9.82;
+    this.gravity = new GravitySettings();
     this.explode = function() {
       return alert('Bang!');
     };
+    this.running = false;
     return this;
   };
 
-  settings = new Settings();
+  ParticleSettings = function() {
+    this.x = 0.0;
+    this.y = 0.0;
+    this.z = 0.0;
+    return this;
+  };
+
+  window.settings = settings = new Settings();
+
+  particleSettings = new ParticleSettings();
+
+  gui = null;
+
+  particleFolder = null;
+
+  selectedParticle = null;
 
   world = null;
 
@@ -53,7 +76,8 @@
   });
 
   cylinderMaterial = new THREE.MeshBasicMaterial({
-    color: 0xFF0000
+    color: 0xFF0000,
+    opacity: 0.5
   });
 
   cylinderSelectedMaterial = new THREE.MeshBasicMaterial({
@@ -108,9 +132,17 @@
     tQuery('sphere').on('mouseover', function(event) {
       return event.target.material = sphereSelectedMaterial;
     }).on('mouseout', function(event) {
+      if (event.target === selectedParticle) {
+        return;
+      }
       return event.target.material = sphereMaterial;
-    }).on('mousedown', function(event) {
-      return event.target.position.y += 10;
+    }).on('click', function(event) {
+      if (selectedParticle != null) {
+        selectedParticle.material = sphereMaterial;
+      }
+      selectedParticle = event.target;
+      selectedParticle.material = sphereSelectedMaterial;
+      return particleFolder.open();
     });
     return tQuery('cylinder').on('mouseover', function(event) {
       return event.target.material = cylinderSelectedMaterial;
@@ -129,7 +161,7 @@
   };
 
   $(function() {
-    var cube, cubeGeometry, cubeMaterial, groundGeo, groundMesh, groundSize, gui, options, tiles;
+    var cube, cubeGeometry, cubeMaterial, gravityFolder, groundGeo, groundMesh, groundSize, options, optionsFolder, tiles;
     options = {
       cameraControls: true,
       stats: false
@@ -174,14 +206,24 @@
     tQuery.createDirectionalLight().addTo(world).position(-1, 1, 1).color(0xFF88BB).intensity(3);
     tQuery.createDirectionalLight().addTo(world).position(1, 1, -1).color(0x4444FF).intensity(2);
     world.loop().hook(function(delta, now) {
-      var c, _i, _len, _results;
+      var c, controller, _i, _j, _len, _len1, _ref, _results;
       if (rigidbody != null) {
         rigidbody.calculate();
       }
-      _results = [];
       for (_i = 0, _len = constraintObjects.length; _i < _len; _i++) {
         c = constraintObjects[_i];
-        _results.push(alignCylinderToParticles(c, c.p1, c.p2));
+        alignCylinderToParticles(c, c.p1, c.p2);
+      }
+      if (selectedParticle != null) {
+        particleSettings.x = selectedParticle.position.x;
+        particleSettings.y = selectedParticle.position.y;
+        particleSettings.z = selectedParticle.position.z;
+      }
+      _ref = particleFolder.__controllers;
+      _results = [];
+      for (_j = 0, _len1 = _ref.length; _j < _len1; _j++) {
+        controller = _ref[_j];
+        _results.push(controller.updateDisplay());
       }
       return _results;
     });
@@ -196,8 +238,23 @@
       return alert('Error!!1! ' + err);
     });
     gui = new dat.GUI();
-    gui.add(settings, 'gravity', -20.0, 20.0);
-    return gui.add(settings, 'explode');
+    optionsFolder = gui.addFolder('Options');
+    optionsFolder.add(settings, 'running');
+    gravityFolder = gui.addFolder('Gravity');
+    gravityFolder.add(settings.gravity, 'enabled');
+    gravityFolder.add(settings.gravity, 'x', -20.0, 20.0).step(0.1);
+    gravityFolder.add(settings.gravity, 'y', -20.0, 20.0);
+    gravityFolder.add(settings.gravity, 'z', -20.0, 20.0);
+    particleFolder = gui.addFolder('Particle');
+    particleFolder.add(particleSettings, 'x').onChange(function(value) {
+      return selectedParticle.position.x = value;
+    });
+    particleFolder.add(particleSettings, 'y').onChange(function(value) {
+      return selectedParticle.position.y = value;
+    });
+    return particleFolder.add(particleSettings, 'z').onChange(function(value) {
+      return selectedParticle.position.z = value;
+    });
   });
 
   handleDnD = function(files) {

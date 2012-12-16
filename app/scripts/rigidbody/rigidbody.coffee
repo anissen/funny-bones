@@ -45,14 +45,19 @@ class RigidBody
   getScene: ->
     @bodyScene
   calculate: ->
+    return if not @settings.running
     @accumulateForces()
     @verlet()
     for i in [0...@iterations]
       @satisfyConstraints()
     @constraintHack()
   accumulateForces: ->
+    gravityVector = new THREE.Vector3(@settings.gravity.x / 1000, @settings.gravity.y / 1000, @settings.gravity.z / 1000)
+    if not @settings.gravity.enabled
+      gravityVector = new THREE.Vector3()
+
     for k, p of @particles
-      p.accumulatedForce = new THREE.Vector3(0.0, @settings.gravity / 1000, 0.0)
+      p.accumulatedForce = gravityVector
       #p.accumulatedForce.addSelf(new THREE.Vector3(0.0, -0.00000098, 0.0)) #@settings.gravity
   verlet: ->
     # Calc deltaTime powered by 2.
