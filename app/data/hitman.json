@@ -124,7 +124,7 @@
         "id": "0x95ab580",
         "label": "head",
         "mass": 3,
-        "immovable": false,
+        "immovable": true,
         "position": {
           "x": -1.5903,
           "y": 47.5814,

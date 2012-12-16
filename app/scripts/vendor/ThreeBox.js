@@ -404,7 +404,7 @@ ThreeBox.OrbitControls = function (camera, domElement, options) {
     phi: τ/4,
     theta: 0.3,
     orbit: 150,
-    lookAt: [0, 0, 0],
+    lookAt: [0, 40, 0],
     speed: 2//,
   });
 

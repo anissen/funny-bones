@@ -52,7 +52,8 @@ class RigidBody
     @constraintHack()
   accumulateForces: ->
     for k, p of @particles
-      p.accumulatedForce.addSelf(new THREE.Vector3(0.0, -0.00000098, 0.0)) #@settings.gravity
+      p.accumulatedForce = new THREE.Vector3(0.0, @settings.gravity / 1000, 0.0)
+      #p.accumulatedForce.addSelf(new THREE.Vector3(0.0, -0.00000098, 0.0)) #@settings.gravity
   verlet: ->
     # Calc deltaTime powered by 2.
     step2 = @step * @step

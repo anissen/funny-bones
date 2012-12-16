@@ -134,7 +134,7 @@
       cameraControls: true,
       stats: false
     };
-    world = threeBox($("#three-placeholder").get(0), options);
+    world = threeBox($("body").get(0), options);
     groundSize = 150;
     tiles = 10;
     groundGeo = new THREE.PlaneGeometry(groundSize, groundSize, tiles, tiles);

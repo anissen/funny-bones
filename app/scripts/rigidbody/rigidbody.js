@@ -115,7 +115,7 @@
       _results = [];
       for (k in _ref) {
         p = _ref[k];
-        _results.push(p.accumulatedForce.addSelf(new THREE.Vector3(0.0, -0.00000098, 0.0)));
+        _results.push(p.accumulatedForce = new THREE.Vector3(0.0, this.settings.gravity / 1000, 0.0));
       }
       return _results;
     };
