@@ -244,9 +244,9 @@ $ ->
   gravityFolder.add(settings.gravity, 'z', -20.0, 20.0)
 
   particleFolder = gui.addFolder('Particle')
-  particleFolder.add(particleSettings, 'x').onChange((value) -> selectedParticle.position.x = value)
-  particleFolder.add(particleSettings, 'y').onChange((value) -> selectedParticle.position.y = value)
-  particleFolder.add(particleSettings, 'z').onChange((value) -> selectedParticle.position.z = value)
+  particleFolder.add(particleSettings, 'x').onChange((value) -> selectedParticle?.position.x = value)
+  particleFolder.add(particleSettings, 'y').onChange((value) -> selectedParticle?.position.y = value)
+  particleFolder.add(particleSettings, 'z').onChange((value) -> selectedParticle?.position.z = value)
 
 handleDnD = (files) ->
   f = files[0]

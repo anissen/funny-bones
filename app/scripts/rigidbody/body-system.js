@@ -247,13 +247,13 @@
     gravityFolder.add(settings.gravity, 'z', -20.0, 20.0);
     particleFolder = gui.addFolder('Particle');
     particleFolder.add(particleSettings, 'x').onChange(function(value) {
-      return selectedParticle.position.x = value;
+      return selectedParticle != null ? selectedParticle.position.x = value : void 0;
     });
     particleFolder.add(particleSettings, 'y').onChange(function(value) {
-      return selectedParticle.position.y = value;
+      return selectedParticle != null ? selectedParticle.position.y = value : void 0;
     });
     return particleFolder.add(particleSettings, 'z').onChange(function(value) {
-      return selectedParticle.position.z = value;
+      return selectedParticle != null ? selectedParticle.position.z = value : void 0;
     });
   });
 
