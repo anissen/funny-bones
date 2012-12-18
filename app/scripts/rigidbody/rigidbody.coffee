@@ -1,9 +1,6 @@
 
 class Particle
-  constructor: (@settings, @mesh) ->
-    if @mesh?
-      @mesh = @mesh.clone
-      @mesh.position = @settings.position
+  constructor: (@settings) ->
     @immovable = @settings.immovable
     @position = new THREE.Vector3(@settings.position.x, @settings.position.y, @settings.position.z)
     @oldPosition = @position.clone()
@@ -14,9 +11,7 @@ class Particle
     if @immovable then 0.0 else 1/@getMass()
 
 class Constraint
-  constructor: (@settings, @mesh) ->
-    if @mesh?
-      @mesh.position = @settings.position
+  constructor: (@settings) ->
 
 class RigidBody
   constructor: (@settings) ->
@@ -33,8 +28,6 @@ class RigidBody
     @particles[id]
   addConstraint: (constraint, constraintCallback) ->
     @constraints.push constraint
-    constraint.p1 = @getParticle(constraint.settings.particle1)
-    constraint.p2 = @getParticle(constraint.settings.particle2)
     constraint.length = constraint.p1.position.distanceTo(constraint.p2.position)
     @bodyScene.add constraintCallback(constraint, constraint.p1, constraint.p2)
   load: (data, particleCallback, constraintCallback) ->
@@ -43,7 +36,10 @@ class RigidBody
     for p in data.rigidbody.particle
       @addParticle new Particle(p), particleCallback
     for c in data.rigidbody.constraint
-      @addConstraint new Constraint(c), constraintCallback
+      constraint = new Constraint(c)
+      constraint.p1 = @getParticle(c.settings.particle1)
+      constraint.p2 = @getParticle(c.settings.particle2)
+      @addConstraint constraint, constraintCallback
   getScene: ->
     @bodyScene
   calculate: ->

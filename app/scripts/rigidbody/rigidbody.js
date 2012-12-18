@@ -3,13 +3,8 @@
 
   Particle = (function() {
 
-    function Particle(settings, mesh) {
+    function Particle(settings) {
       this.settings = settings;
-      this.mesh = mesh;
-      if (this.mesh != null) {
-        this.mesh = this.mesh.clone;
-        this.mesh.position = this.settings.position;
-      }
       this.immovable = this.settings.immovable;
       this.position = new THREE.Vector3(this.settings.position.x, this.settings.position.y, this.settings.position.z);
       this.oldPosition = this.position.clone();
@@ -38,12 +33,8 @@
 
   Constraint = (function() {
 
-    function Constraint(settings, mesh) {
+    function Constraint(settings) {
       this.settings = settings;
-      this.mesh = mesh;
-      if (this.mesh != null) {
-        this.mesh.position = this.settings.position;
-      }
     }
 
     return Constraint;
@@ -73,14 +64,12 @@
 
     RigidBody.prototype.addConstraint = function(constraint, constraintCallback) {
       this.constraints.push(constraint);
-      constraint.p1 = this.getParticle(constraint.settings.particle1);
-      constraint.p2 = this.getParticle(constraint.settings.particle2);
       constraint.length = constraint.p1.position.distanceTo(constraint.p2.position);
       return this.bodyScene.add(constraintCallback(constraint, constraint.p1, constraint.p2));
     };
 
     RigidBody.prototype.load = function(data, particleCallback, constraintCallback) {
-      var c, p, _i, _j, _len, _len1, _ref, _ref1, _results;
+      var c, constraint, p, _i, _j, _len, _len1, _ref, _ref1, _results;
       this.particles = {};
       this.constraints = [];
       _ref = data.rigidbody.particle;
@@ -92,7 +81,10 @@
       _results = [];
       for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
         c = _ref1[_j];
-        _results.push(this.addConstraint(new Constraint(c), constraintCallback));
+        constraint = new Constraint(c);
+        constraint.p1 = this.getParticle(c.settings.particle1);
+        constraint.p2 = this.getParticle(c.settings.particle2);
+        _results.push(this.addConstraint(constraint, constraintCallback));
       }
       return _results;
     };
