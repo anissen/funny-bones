@@ -1,5 +1,5 @@
 (function() {
-  var GravitySettings, Settings, alignCylinderToParticles, animate, bevelEnabled, bevelSegments, bevelSize, bevelThickness, camera, cameraTarget, color, constraintObjects, container, createScene, createTextMesh, curveSegments, cylinderMaterial, decimalToHex, effectFXAA, font, glow, height, hex, hover, init, material, mirror, mouseX, mouseXOnMouseDown, onDocumentMouseDown, onDocumentMouseMove, onDocumentMouseOut, onDocumentMouseUp, onDocumentTouchMove, onDocumentTouchStart, onWindowResize, parent, postprocessing, render, renderer, rigidbody, scene, selectedParticle, settings, size, sphereMaterial, stats, style, targetRotation, targetRotationOnMouseDown, text, textGeo, textMesh1, textMesh2, weight, windowHalfX, windowHalfY, world;
+  var GravitySettings, Settings, alignCylinderToParticles, animate, bevelEnabled, bevelSegments, bevelSize, bevelThickness, camera, cameraTarget, color, constraintObjects, container, createScene, createTextMesh, curveSegments, cylinderMaterial, decimalToHex, effectFXAA, font, glow, height, hex, hover, imgTexture2, init, material, mirror, mouseX, mouseXOnMouseDown, onDocumentMouseDown, onDocumentMouseMove, onDocumentMouseOut, onDocumentMouseUp, onDocumentTouchMove, onDocumentTouchStart, onWindowResize, parent, postprocessing, render, renderer, rigidbody, scene, selectedParticle, settings, size, sphereMaterial, stats, style, targetRotation, targetRotationOnMouseDown, text, textGeo, textMesh1, textMesh2, weight, windowHalfX, windowHalfY, world;
 
   if (!Detector.webgl) {
     Detector.addGetWebGLMessage();
@@ -30,6 +30,12 @@
 
   constraintObjects = [];
 
+  imgTexture2 = THREE.ImageUtils.loadTexture("/data/images/pine.jpg");
+
+  imgTexture2.wrapS = imgTexture2.wrapT = THREE.RepeatWrapping;
+
+  imgTexture2.anisotropy = 16;
+
   sphereMaterial = new THREE.MeshPhongMaterial({
     ambient: 0xFFFFFF,
     color: 0xAA0000,
@@ -38,6 +44,9 @@
   });
 
   cylinderMaterial = new THREE.MeshPhongMaterial({
+    map: imgTexture2,
+    bumpMap: imgTexture2,
+    bumpScale: 1,
     ambient: 0xFFFFFF,
     color: 0x00AA00,
     specular: 0x555555,
@@ -130,7 +139,7 @@
     camera.position.set(0, 400, 700);
     cameraTarget = new THREE.Vector3(0, 150, 0);
     scene = new THREE.Scene();
-    scene.fog = new THREE.Fog(0x001100, 250, 1400);
+    scene.fog = new THREE.Fog(0x112211, 250, 1400);
     dirLight = new THREE.DirectionalLight(0xffffff, 0.125);
     dirLight.position.set(0, 0, 1).normalize();
     scene.add(dirLight);
@@ -151,7 +160,7 @@
     parent.position.y = 100;
     scene.add(parent);
     plane = new THREE.Mesh(new THREE.PlaneGeometry(10000, 10000), new THREE.MeshBasicMaterial({
-      color: 0x00FF00,
+      color: 0x00BB00,
       opacity: 0.5,
       transparent: true
     }));
@@ -292,7 +301,7 @@
 
   createScene = function() {
     var createChristmasRope, createCylinderConstraint, createParticle, radius, rings, segments;
-    radius = 5;
+    radius = 6;
     segments = 8;
     rings = 8;
     createParticle = function(p) {
@@ -304,7 +313,7 @@
     createCylinderConstraint = function(c, p1, p2) {
       var cylinder, cylinderGeo, cylinderLength, cylinderRadius, length;
       length = p1.position.distanceTo(p2.position);
-      cylinderRadius = 2;
+      cylinderRadius = 3;
       cylinderLength = length;
       cylinderGeo = new THREE.CylinderGeometry(cylinderRadius, cylinderRadius, cylinderLength, 6, 1, false);
       cylinder = new THREE.Mesh(cylinderGeo, cylinderMaterial);

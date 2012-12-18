@@ -229,7 +229,7 @@ $ ->
 
 
   $.ajax(
-    url: 'data/hitman.json',
+    url: 'data/rigidbodies/hitman.json',
     dataType: 'JSON',
     type: 'GET'
   )

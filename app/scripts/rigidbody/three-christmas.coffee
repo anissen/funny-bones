@@ -23,7 +23,9 @@ constraintObjects = []
 
 
 
-
+imgTexture2 = THREE.ImageUtils.loadTexture( "/data/images/pine.jpg" )
+imgTexture2.wrapS = imgTexture2.wrapT = THREE.RepeatWrapping
+imgTexture2.anisotropy = 16
 
 sphereMaterial = new THREE.MeshPhongMaterial(
   ambient: 0xFFFFFF
@@ -33,6 +35,9 @@ sphereMaterial = new THREE.MeshPhongMaterial(
 )
 
 cylinderMaterial = new THREE.MeshPhongMaterial(
+  map: imgTexture2
+  bumpMap: imgTexture2
+  bumpScale: 1
   ambient: 0xFFFFFF
   color: 0x00AA00
   specular: 0x555555
@@ -76,6 +81,7 @@ windowHalfY = window.innerHeight / 2
 postprocessing = enabled: false
 glow = 0.9
 
+
 decimalToHex = (d) ->
   hex = Number(d).toString(16)
   hex = "000000".substr(0, 6 - hex.length) + hex
@@ -92,7 +98,7 @@ init = ->
 
   # SCENE
   scene = new THREE.Scene()
-  scene.fog = new THREE.Fog(0x001100, 250, 1400)
+  scene.fog = new THREE.Fog(0x112211, 250, 1400)
 
   # LIGHTS
   dirLight = new THREE.DirectionalLight(0xffffff, 0.125)
@@ -117,7 +123,7 @@ init = ->
   scene.add parent
   #createText()
   plane = new THREE.Mesh(new THREE.PlaneGeometry(10000, 10000), new THREE.MeshBasicMaterial(
-    color: 0x00FF00
+    color: 0x00BB00
     opacity: 0.5
     transparent: true
   ))
@@ -220,6 +226,8 @@ animate = ->
 render = ->
   parent.rotation.y += (targetRotation - parent.rotation.y) * 0.05
 
+  #numConstraints = rigidbody.constraints.length
+  #rigidbody.constraints[Math.floor(Math.random()*numConstraints)].p1.position.y += 1
   rigidbody?.calculate()
   for c in constraintObjects
     alignCylinderToParticles(c, c.p1, c.p2)
@@ -250,7 +258,7 @@ alignCylinderToParticles = (cylinder, p1, p2) ->
   cylinder.rotation.setEulerFromRotationMatrix(cylinder.matrix)
 
 createScene = ->
-  radius = 5
+  radius = 6
   segments = 8
   rings = 8
 
@@ -265,7 +273,7 @@ createScene = ->
     length = p1.position.distanceTo(p2.position)
 
     #THREE.CylinderGeometry = function ( radiusTop, radiusBottom, height, radiusSegments, heightSegments, openEnded )
-    cylinderRadius = 2
+    cylinderRadius = 3
     cylinderLength = length
     cylinderGeo = new THREE.CylinderGeometry(cylinderRadius, cylinderRadius, cylinderLength, 6, 1, false)
     cylinder = new THREE.Mesh(cylinderGeo, cylinderMaterial)
