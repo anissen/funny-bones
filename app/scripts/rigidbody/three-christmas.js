@@ -330,6 +330,9 @@
       p = _ref[k];
       approxDistanceToCenter = p.position.x;
       p.addForce(new THREE.Vector3(0, rotationDiff / 200, -(approxDistanceToCenter * rotationDiff) / 10000));
+      if (p.textMesh != null) {
+        p.textMesh.rotation.x = -p.position.z / 30;
+      }
     }
     if (rigidbody != null) {
       rigidbody.calculate();
@@ -446,7 +449,6 @@
       _results = [];
       for (i = _i = 1; 1 <= segmentCount ? _i <= segmentCount : _i >= segmentCount; i = 1 <= segmentCount ? ++_i : --_i) {
         posVector = (new THREE.Vector3()).add(startVector, diff.clone().multiplyScalar((i - 1) / (segmentCount - 1)));
-        console.log(posVector.x);
         particleSettings = {
           id: ropeId + 'particle' + i,
           position: posVector,
@@ -469,13 +471,14 @@
             p2: letterParticle,
             strategy: letterId === breakLetter ? 'break' : 'default',
             broken: false,
-            breakFactor: 1.1
+            breakFactor: 1.08
           };
           constraint = new Constraint(constraintSettings);
           rigidbody.addConstraint(constraint, createCylinderConstraint);
           letter = letters[letterId];
           textMesh = createTextMesh(letter);
           textMesh.position = letterParticle.position;
+          particle.textMesh = textMesh;
           parent.add(textMesh);
           letterId++;
           particleLetter += letterMargin;

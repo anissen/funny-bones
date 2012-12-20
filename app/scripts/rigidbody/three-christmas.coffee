@@ -288,6 +288,8 @@ render = ->
   for k, p of rigidbody.particles
     approxDistanceToCenter = p.position.x
     p.addForce (new THREE.Vector3(0, rotationDiff / 200, -(approxDistanceToCenter * rotationDiff) / 10000 ))
+    if p.textMesh?
+      p.textMesh.rotation.x = -p.position.z / 30
 
   rigidbody?.calculate()
   for c in constraintObjects
@@ -407,7 +409,6 @@ createScene = ->
     lastParticle = null
     for i in [1..segmentCount]
       posVector = (new THREE.Vector3()).add(startVector, diff.clone().multiplyScalar((i-1) / (segmentCount-1)))
-      console.log posVector.x
       particleSettings =
         id: ropeId + 'particle' + i
         position: posVector
@@ -430,13 +431,14 @@ createScene = ->
           p2: letterParticle
           strategy: if letterId is breakLetter then 'break' else 'default'
           broken: false
-          breakFactor: 1.1
+          breakFactor: 1.08
         constraint = new Constraint constraintSettings
         rigidbody.addConstraint constraint, createCylinderConstraint
 
         letter = letters[letterId]
         textMesh = createTextMesh(letter)
         textMesh.position = letterParticle.position
+        particle.textMesh = textMesh
         parent.add textMesh
 
         letterId++
