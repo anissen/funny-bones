@@ -1,5 +1,5 @@
 (function() {
-  var GravitySettings, Settings, alignCylinderToParticles, animate, bevelEnabled, bevelSegments, bevelSize, bevelThickness, camera, cameraTarget, color, constraintObjects, container, createScene, createTextMesh, curveSegments, cylinderMaterial, decimalToHex, effectFXAA, font, glow, height, hex, hover, imgTexture2, init, material, mirror, mouseX, mouseXOnMouseDown, onDocumentMouseDown, onDocumentMouseMove, onDocumentMouseOut, onDocumentMouseUp, onDocumentTouchMove, onDocumentTouchStart, onWindowResize, parent, postprocessing, render, renderer, rigidbody, scene, selectedParticle, settings, size, sphereMaterial, stats, style, targetRotation, targetRotationOnMouseDown, text, textGeo, textMesh1, textMesh2, weight, windowHalfX, windowHalfY, world;
+  var GravitySettings, SCREEN_HEIGHT, SCREEN_WIDTH, Settings, alignCylinderToParticles, animate, bevelEnabled, bevelSegments, bevelSize, bevelThickness, camera, cameraTarget, clock, color, composer, constraintObjects, container, createScene, createSnowflakes, createTextMesh, curveSegments, cylinderMaterial, decimalToHex, effectFXAA, font, glow, hblur, height, hex, hover, imgTexture2, init, material, materials, mirror, mouseX, mouseXOnMouseDown, onDocumentMouseDown, onDocumentMouseMove, onDocumentMouseOut, onDocumentMouseUp, onDocumentTouchMove, onDocumentTouchStart, onWindowResize, parameters, parent, postprocessing, render, renderTargetParameters, renderer, rigidbody, scene, selectedParticle, settings, size, snowflakeScene, sphereMaterial, stats, style, targetRotation, targetRotationOnMouseDown, text, textGeo, textMesh1, textMesh2, time, vblur, weight, windowHalfX, windowHalfY, world;
 
   if (!Detector.webgl) {
     Detector.addGetWebGLMessage();
@@ -52,6 +52,10 @@
     specular: 0x555555,
     shininess: 10
   });
+
+  SCREEN_WIDTH = window.innerWidth;
+
+  SCREEN_HEIGHT = window.innerHeight;
 
   container = void 0;
 
@@ -115,15 +119,38 @@
 
   mouseXOnMouseDown = 0;
 
-  windowHalfX = window.innerWidth / 2;
+  windowHalfX = SCREEN_WIDTH / 2;
 
-  windowHalfY = window.innerHeight / 2;
+  windowHalfY = SCREEN_HEIGHT / 2;
 
   postprocessing = {
     enabled: false
   };
 
   glow = 0.9;
+
+  hblur = null;
+
+  vblur = null;
+
+  renderTargetParameters = {
+    minFilter: THREE.LinearFilter,
+    magFilter: THREE.LinearFilter,
+    format: THREE.RGBFormat,
+    stencilBuffer: false
+  };
+
+  composer = null;
+
+  time = 0;
+
+  clock = new THREE.Clock();
+
+  snowflakeScene = null;
+
+  materials = [];
+
+  parameters = null;
 
   decimalToHex = function(d) {
     hex = Number(d).toString(16);
@@ -132,10 +159,10 @@
   };
 
   init = function() {
-    var dirLight, plane, pointLight;
+    var bluriness, dirLight, plane, pointLight, renderModel, renderTarget;
     container = document.createElement("div");
     document.body.appendChild(container);
-    camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 1, 1500);
+    camera = new THREE.PerspectiveCamera(30, SCREEN_WIDTH / SCREEN_HEIGHT, 1, 1500);
     camera.position.set(0, 400, 700);
     cameraTarget = new THREE.Vector3(0, 150, 0);
     scene = new THREE.Scene();
@@ -170,9 +197,27 @@
     renderer = new THREE.WebGLRenderer({
       antialias: true
     });
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
     renderer.setClearColor(scene.fog.color, 1);
     container.appendChild(renderer.domElement);
+    renderer.autoClear = false;
+    renderTarget = new THREE.WebGLRenderTarget(SCREEN_WIDTH, SCREEN_HEIGHT, renderTargetParameters);
+    effectFXAA = new THREE.ShaderPass(THREE.FXAAShader);
+    hblur = new THREE.ShaderPass(THREE.HorizontalTiltShiftShader);
+    vblur = new THREE.ShaderPass(THREE.VerticalTiltShiftShader);
+    bluriness = 2;
+    hblur.uniforms["h"].value = bluriness / SCREEN_WIDTH;
+    vblur.uniforms["v"].value = bluriness / SCREEN_HEIGHT;
+    hblur.uniforms["r"].value = vblur.uniforms["r"].value = 0.5;
+    effectFXAA.uniforms["resolution"].value.set(1 / SCREEN_WIDTH, 1 / SCREEN_HEIGHT);
+    composer = new THREE.EffectComposer(renderer, renderTarget);
+    renderModel = new THREE.RenderPass(scene, camera);
+    vblur.renderToScreen = true;
+    composer = new THREE.EffectComposer(renderer, renderTarget);
+    composer.addPass(renderModel);
+    composer.addPass(effectFXAA);
+    composer.addPass(hblur);
+    composer.addPass(vblur);
     stats = new Stats();
     stats.domElement.style.position = "absolute";
     stats.domElement.style.top = "0px";
@@ -183,11 +228,20 @@
   };
 
   onWindowResize = function() {
-    windowHalfX = window.innerWidth / 2;
-    windowHalfY = window.innerHeight / 2;
-    camera.aspect = window.innerWidth / window.innerHeight;
+    var bluriness, renderTarget;
+    SCREEN_WIDTH = window.innerWidth;
+    SCREEN_HEIGHT = window.innerHeight;
+    windowHalfX = SCREEN_WIDTH / 2;
+    windowHalfY = SCREEN_HEIGHT / 2;
+    camera.aspect = SCREEN_WIDTH / SCREEN_HEIGHT;
     camera.updateProjectionMatrix();
-    return renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+    renderTarget = new THREE.WebGLRenderTarget(SCREEN_WIDTH, SCREEN_HEIGHT, renderTargetParameters);
+    composer.reset(renderTarget);
+    bluriness = 2;
+    hblur.uniforms['h'].value = bluriness / SCREEN_WIDTH;
+    vblur.uniforms['v'].value = bluriness / SCREEN_HEIGHT;
+    return effectFXAA.uniforms['resolution'].value.set(1 / SCREEN_WIDTH, 1 / SCREEN_HEIGHT);
   };
 
   createTextMesh = function(text) {
@@ -268,7 +322,7 @@
   };
 
   render = function() {
-    var c, _i, _len;
+    var c, delta, h, i, snowflake, _i, _j, _k, _len, _ref, _ref1;
     parent.rotation.y += (targetRotation - parent.rotation.y) * 0.05;
     if (rigidbody != null) {
       rigidbody.calculate();
@@ -277,9 +331,19 @@
       c = constraintObjects[_i];
       alignCylinderToParticles(c, c.p1, c.p2);
     }
+    delta = clock.getDelta();
+    time = Date.now() * 0.00005;
+    for (i = _j = 0, _ref = snowflakeScene.children.length; 0 <= _ref ? _j < _ref : _j > _ref; i = 0 <= _ref ? ++_j : --_j) {
+      snowflake = snowflakeScene.children[i];
+      snowflake.rotation.y = time * (i < 4 ? i + 1 : -(i + 1));
+    }
+    for (i = _k = 0, _ref1 = materials.length; 0 <= _ref1 ? _k < _ref1 : _k > _ref1; i = 0 <= _ref1 ? ++_k : --_k) {
+      color = parameters[i][0];
+      h = (360 * (color[0] + time) % 360) / 360;
+      materials[i].color.setHSV(h, color[1], color[2]);
+    }
     camera.lookAt(cameraTarget);
-    renderer.clear();
-    return renderer.render(scene, camera);
+    return composer.render(delta);
   };
 
   alignCylinderToParticles = function(cylinder, p1, p2) {
@@ -297,6 +361,44 @@
     cylinder.matrix = new THREE.Matrix4();
     cylinder.matrix.multiplySelf(rotObjectMatrix);
     return cylinder.rotation.setEulerFromRotationMatrix(cylinder.matrix);
+  };
+
+  createSnowflakes = function() {
+    var geometry, i, particles, sprite, sprite1, sprite2, sprite3, sprite4, sprite5, vertex, _i, _j, _ref;
+    snowflakeScene = new THREE.Scene();
+    sprite1 = THREE.ImageUtils.loadTexture("/data/images/sprites/snowflake1.png");
+    sprite2 = THREE.ImageUtils.loadTexture("/data/images/sprites/snowflake2.png");
+    sprite3 = THREE.ImageUtils.loadTexture("/data/images/sprites/snowflake3.png");
+    sprite4 = THREE.ImageUtils.loadTexture("/data/images/sprites/snowflake4.png");
+    sprite5 = THREE.ImageUtils.loadTexture("/data/images/sprites/snowflake5.png");
+    geometry = new THREE.Geometry();
+    for (i = _i = 0; _i < 500; i = ++_i) {
+      vertex = new THREE.Vector3();
+      vertex.x = Math.random() * 1000 - 500;
+      vertex.y = Math.random() * 1000 - 500;
+      vertex.z = Math.random() * 1000 - 500;
+      geometry.vertices.push(vertex);
+    }
+    parameters = [[[1.0, 0.2, 1.0], sprite2, 20], [[0.95, 0.1, 1], sprite3, 15], [[0.90, 0.05, 1], sprite1, 10], [[0.85, 0, 0.8], sprite5, 8], [[0.80, 0, 0.7], sprite4, 5]];
+    for (i = _j = 0, _ref = parameters.length; 0 <= _ref ? _j < _ref : _j > _ref; i = 0 <= _ref ? ++_j : --_j) {
+      color = parameters[i][0];
+      sprite = parameters[i][1];
+      size = parameters[i][2];
+      materials[i] = new THREE.ParticleBasicMaterial({
+        size: size,
+        map: sprite,
+        blending: THREE.AdditiveBlending,
+        depthTest: false,
+        transparent: true
+      });
+      materials[i].color.setHSV(color[0], color[1], color[2]);
+      particles = new THREE.ParticleSystem(geometry, materials[i]);
+      particles.rotation.x = Math.random() * 6;
+      particles.rotation.y = Math.random() * 6;
+      particles.rotation.z = Math.random() * 6;
+      snowflakeScene.add(particles);
+    }
+    return parent.add(snowflakeScene);
   };
 
   createScene = function() {
@@ -375,7 +477,8 @@
     };
     createChristmasRope('first', new THREE.Vector3(-300, 230, 0), new THREE.Vector3(300, 230, 0), ['G', 'O', 'D']);
     createChristmasRope('second', new THREE.Vector3(-250, 100, 0), new THREE.Vector3(250, 100, 0), ['J', 'U', 'L']);
-    return parent.add(rigidbody.getScene());
+    parent.add(rigidbody.getScene());
+    return createSnowflakes();
   };
 
   init();
