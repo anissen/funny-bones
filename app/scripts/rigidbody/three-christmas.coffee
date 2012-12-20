@@ -23,7 +23,7 @@ constraintObjects = []
 
 
 
-imgTexture2 = THREE.ImageUtils.loadTexture( "/data/images/pine.jpg" )
+imgTexture2 = THREE.ImageUtils.loadTexture( "./data/images/pine.jpg" )
 imgTexture2.wrapS = imgTexture2.wrapT = THREE.RepeatWrapping
 imgTexture2.anisotropy = 16
 
@@ -334,11 +334,11 @@ alignCylinderToParticles = (cylinder, p1, p2) ->
 
 createSnowflakes = ->
   snowflakeScene = new THREE.Scene()
-  sprite1 = THREE.ImageUtils.loadTexture("/data/images/sprites/snowflake1.png")
-  sprite2 = THREE.ImageUtils.loadTexture("/data/images/sprites/snowflake2.png")
-  sprite3 = THREE.ImageUtils.loadTexture("/data/images/sprites/snowflake3.png")
-  sprite4 = THREE.ImageUtils.loadTexture("/data/images/sprites/snowflake4.png")
-  sprite5 = THREE.ImageUtils.loadTexture("/data/images/sprites/snowflake5.png")
+  sprite1 = THREE.ImageUtils.loadTexture("./data/images/sprites/snowflake1.png")
+  sprite2 = THREE.ImageUtils.loadTexture("./data/images/sprites/snowflake2.png")
+  sprite3 = THREE.ImageUtils.loadTexture("./data/images/sprites/snowflake3.png")
+  sprite4 = THREE.ImageUtils.loadTexture("./data/images/sprites/snowflake4.png")
+  sprite5 = THREE.ImageUtils.loadTexture("./data/images/sprites/snowflake5.png")
   geometry = new THREE.Geometry()
   for i in [0...500]
     vertex = new THREE.Vector3()

@@ -30,7 +30,7 @@
 
   constraintObjects = [];
 
-  imgTexture2 = THREE.ImageUtils.loadTexture("/data/images/pine.jpg");
+  imgTexture2 = THREE.ImageUtils.loadTexture("./data/images/pine.jpg");
 
   imgTexture2.wrapS = imgTexture2.wrapT = THREE.RepeatWrapping;
 
@@ -376,11 +376,11 @@
   createSnowflakes = function() {
     var geometry, i, particles, sprite, sprite1, sprite2, sprite3, sprite4, sprite5, vertex, _i, _j, _ref;
     snowflakeScene = new THREE.Scene();
-    sprite1 = THREE.ImageUtils.loadTexture("/data/images/sprites/snowflake1.png");
-    sprite2 = THREE.ImageUtils.loadTexture("/data/images/sprites/snowflake2.png");
-    sprite3 = THREE.ImageUtils.loadTexture("/data/images/sprites/snowflake3.png");
-    sprite4 = THREE.ImageUtils.loadTexture("/data/images/sprites/snowflake4.png");
-    sprite5 = THREE.ImageUtils.loadTexture("/data/images/sprites/snowflake5.png");
+    sprite1 = THREE.ImageUtils.loadTexture("./data/images/sprites/snowflake1.png");
+    sprite2 = THREE.ImageUtils.loadTexture("./data/images/sprites/snowflake2.png");
+    sprite3 = THREE.ImageUtils.loadTexture("./data/images/sprites/snowflake3.png");
+    sprite4 = THREE.ImageUtils.loadTexture("./data/images/sprites/snowflake4.png");
+    sprite5 = THREE.ImageUtils.loadTexture("./data/images/sprites/snowflake5.png");
     geometry = new THREE.Geometry();
     for (i = _i = 0; _i < 500; i = ++_i) {
       vertex = new THREE.Vector3();
