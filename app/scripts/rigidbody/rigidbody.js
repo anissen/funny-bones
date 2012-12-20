@@ -8,7 +8,8 @@
       this.immovable = this.settings.immovable;
       this.position = new THREE.Vector3(this.settings.position.x, this.settings.position.y, this.settings.position.z);
       this.oldPosition = this.position.clone();
-      this.accumulatedForce = new THREE.Vector3(0.0, 0.0, 0.0);
+      this.accumulatedForce = new THREE.Vector3();
+      this.addedForce = new THREE.Vector3();
     }
 
     Particle.prototype.getMass = function() {
@@ -27,6 +28,10 @@
       }
     };
 
+    Particle.prototype.addForce = function(force) {
+      return this.addedForce.addSelf(force);
+    };
+
     return Particle;
 
   })();
@@ -35,6 +40,11 @@
 
     function Constraint(settings) {
       this.settings = settings;
+      this.p1 = this.settings.p1;
+      this.p2 = this.settings.p2;
+      this.strategy = this.settings.strategy;
+      this.broken = this.settings.broken;
+      this.breakFactor = this.settings.breakFactor;
     }
 
     return Constraint;
@@ -50,7 +60,7 @@
       this.constraints = [];
       this.step = 1.0;
       this.damping = 0.05;
-      this.iterations = 3;
+      this.iterations = 2;
     }
 
     RigidBody.prototype.addParticle = function(particle, particleCallback) {
@@ -94,16 +104,17 @@
     };
 
     RigidBody.prototype.calculate = function() {
-      var i, _i, _ref;
+      var i, _i, _ref, _results;
       if (!this.settings.running) {
         return;
       }
       this.accumulateForces();
       this.verlet();
+      _results = [];
       for (i = _i = 0, _ref = this.iterations; 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i) {
-        this.satisfyConstraints();
+        _results.push(this.satisfyConstraints());
       }
-      return this.constraintHack();
+      return _results;
     };
 
     RigidBody.prototype.accumulateForces = function() {
@@ -116,7 +127,8 @@
       _results = [];
       for (k in _ref) {
         p = _ref[k];
-        _results.push(p.accumulatedForce = gravityVector);
+        p.accumulatedForce = (new THREE.Vector3()).add(p.addedForce, gravityVector);
+        _results.push(p.addedForce = new THREE.Vector3());
       }
       return _results;
     };
@@ -146,6 +158,9 @@
       _results = [];
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         c = _ref[_i];
+        if (c.broken) {
+          continue;
+        }
         if (c.p1.immovable && c.p2.immovable) {
           continue;
         }
@@ -156,6 +171,9 @@
         delta = new THREE.Vector3(0, 0, 0);
         delta.sub(x2, x1);
         deltalength = delta.length();
+        if (c.strategy === 'break' && deltalength > c.length * c.breakFactor) {
+          c.broken = true;
+        }
         diff = (deltalength - c.length) / (deltalength * (invmass1 + invmass2));
         displacement = delta.multiplyScalar(diff);
         displacement1 = displacement.clone().multiplyScalar(invmass1);

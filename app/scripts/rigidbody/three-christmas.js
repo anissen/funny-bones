@@ -322,8 +322,15 @@
   };
 
   render = function() {
-    var c, delta, h, i, snowflake, _i, _j, _k, _len, _ref, _ref1;
+    var approxDistanceToCenter, c, delta, h, i, k, p, rotationDiff, snowflake, _i, _j, _k, _len, _ref, _ref1, _ref2;
     parent.rotation.y += (targetRotation - parent.rotation.y) * 0.05;
+    rotationDiff = parent.rotation.y - targetRotation;
+    _ref = rigidbody.particles;
+    for (k in _ref) {
+      p = _ref[k];
+      approxDistanceToCenter = p.position.x;
+      p.addForce(new THREE.Vector3(0, rotationDiff / 200, -(approxDistanceToCenter * rotationDiff) / 10000));
+    }
     if (rigidbody != null) {
       rigidbody.calculate();
     }
@@ -333,11 +340,11 @@
     }
     delta = clock.getDelta();
     time = Date.now() * 0.00005;
-    for (i = _j = 0, _ref = snowflakeScene.children.length; 0 <= _ref ? _j < _ref : _j > _ref; i = 0 <= _ref ? ++_j : --_j) {
+    for (i = _j = 0, _ref1 = snowflakeScene.children.length; 0 <= _ref1 ? _j < _ref1 : _j > _ref1; i = 0 <= _ref1 ? ++_j : --_j) {
       snowflake = snowflakeScene.children[i];
       snowflake.rotation.y = time * (i < 4 ? i + 1 : -(i + 1));
     }
-    for (i = _k = 0, _ref1 = materials.length; 0 <= _ref1 ? _k < _ref1 : _k > _ref1; i = 0 <= _ref1 ? ++_k : --_k) {
+    for (i = _k = 0, _ref2 = materials.length; 0 <= _ref2 ? _k < _ref2 : _k > _ref2; i = 0 <= _ref2 ? ++_k : --_k) {
       color = parameters[i][0];
       h = (360 * (color[0] + time) % 360) / 360;
       materials[i].color.setHSV(h, color[1], color[2]);
@@ -425,38 +432,46 @@
       alignCylinderToParticles(cylinder, p1, p2);
       return cylinder;
     };
-    createChristmasRope = function(ropeId, startVector, endVector, letters) {
-      var constraint, diff, i, lastParticle, letter, letterId, letterMargin, letterParticle, particle, particleLetter, particleSettings, posVector, segmentCount, textMesh, _i, _results;
+    createChristmasRope = function(ropeId, startVector, endVector, letters, breakLetter) {
+      var constraint, constraintSettings, diff, endSegments, i, lastParticle, letter, letterId, letterMargin, letterParticle, particle, particleLetter, particleSettings, posVector, segmentCount, startSegments, textMesh, _i, _results;
       diff = (new THREE.Vector3()).sub(endVector, startVector);
       letterMargin = 3;
       letterId = 0;
-      segmentCount = letterMargin + letterMargin * letters.length + letterMargin;
-      particleLetter = letterMargin + Math.ceil(letterMargin / 2);
+      startSegments = 1;
+      endSegments = 1;
+      segmentCount = startSegments + letterMargin * letters.length + endSegments;
+      particleLetter = startSegments + Math.ceil(letterMargin / 2);
       particle = null;
       lastParticle = null;
       _results = [];
       for (i = _i = 1; 1 <= segmentCount ? _i <= segmentCount : _i >= segmentCount; i = 1 <= segmentCount ? ++_i : --_i) {
-        posVector = (new THREE.Vector3()).add(startVector, diff.clone().multiplyScalar(i / segmentCount));
+        posVector = (new THREE.Vector3()).add(startVector, diff.clone().multiplyScalar((i - 1) / (segmentCount - 1)));
+        console.log(posVector.x);
         particleSettings = {
           id: ropeId + 'particle' + i,
           position: posVector,
-          mass: 3.0,
+          mass: 1.0,
           immovable: i === 1 || i === segmentCount
         };
         particle = new Particle(particleSettings);
         rigidbody.addParticle(particle, createParticle);
-        if (i === particleLetter && i + Math.floor(letterMargin / 2) + letterMargin <= segmentCount) {
+        if (i === particleLetter && i + Math.floor(letterMargin / 2) + endSegments <= segmentCount) {
           particleSettings = {
             id: ropeId + 'particleLetter' + i,
             position: (new THREE.Vector3()).add(posVector, new THREE.Vector3(0, -40, 0)),
-            mass: 15.0,
+            mass: 10.0,
             immovable: false
           };
           letterParticle = new Particle(particleSettings);
           rigidbody.addParticle(letterParticle, createParticle);
-          constraint = new Constraint(null);
-          constraint.p1 = particle;
-          constraint.p2 = letterParticle;
+          constraintSettings = {
+            p1: particle,
+            p2: letterParticle,
+            strategy: letterId === breakLetter ? 'break' : 'default',
+            broken: false,
+            breakFactor: 1.1
+          };
+          constraint = new Constraint(constraintSettings);
           rigidbody.addConstraint(constraint, createCylinderConstraint);
           letter = letters[letterId];
           textMesh = createTextMesh(letter);
@@ -466,17 +481,19 @@
           particleLetter += letterMargin;
         }
         if (lastParticle != null) {
-          constraint = new Constraint(null);
-          constraint.p1 = lastParticle;
-          constraint.p2 = particle;
+          constraintSettings = {
+            p1: lastParticle,
+            p2: particle
+          };
+          constraint = new Constraint(constraintSettings);
           rigidbody.addConstraint(constraint, createCylinderConstraint);
         }
         _results.push(lastParticle = particle);
       }
       return _results;
     };
-    createChristmasRope('first', new THREE.Vector3(-300, 230, 0), new THREE.Vector3(300, 230, 0), ['G', 'O', 'D']);
-    createChristmasRope('second', new THREE.Vector3(-250, 100, 0), new THREE.Vector3(250, 100, 0), ['J', 'U', 'L']);
+    createChristmasRope('first', new THREE.Vector3(-320, 230, 0), new THREE.Vector3(320, 230, 0), ['G', 'O', 'D', 'T'], 3);
+    createChristmasRope('second', new THREE.Vector3(-300, 80, 0), new THREE.Vector3(300, 80, 0), ['H', 'J', 'U', 'L'], 0);
     parent.add(rigidbody.getScene());
     return createSnowflakes();
   };

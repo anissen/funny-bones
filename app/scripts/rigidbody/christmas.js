@@ -167,7 +167,7 @@
       return cylinder;
     };
     createChristmasRope = function(startVector, endVector, letters) {
-      var constraint, diff, i, lastParticle, letterId, letterMargin, letterParticle, particle, particleLetter, particleSettings, posVector, segmentCount, _i, _results;
+      var constraint, constraintSettings, diff, i, lastParticle, letterId, letterMargin, letterParticle, particle, particleLetter, particleSettings, posVector, segmentCount, _i, _results;
       diff = (new THREE.Vector3()).sub(endVector, startVector);
       letterMargin = 3;
       letterId = 0;
@@ -195,9 +195,11 @@
           };
           letterParticle = new Particle(particleSettings);
           rigidbody.addParticle(letterParticle, createParticle);
-          constraint = new Constraint(null);
-          constraint.p1 = particle;
-          constraint.p2 = letterParticle;
+          constraintSettings = {
+            p1: particle,
+            p2: letterParticle
+          };
+          constraint = new Constraint(constraintSettings);
           rigidbody.addConstraint(constraint, createCylinderConstraint);
           text = tQuery.createText(letters[letterId]);
           text.position = letterParticle.position.clone();
@@ -208,9 +210,11 @@
           particleLetter += letterMargin;
         }
         if (lastParticle != null) {
-          constraint = new Constraint(null);
-          constraint.p1 = lastParticle;
-          constraint.p2 = particle;
+          constraintSettings = {
+            p1: lastParticle,
+            p2: particle
+          };
+          constraint = new Constraint(constraintSettings);
           rigidbody.addConstraint(constraint, createCylinderConstraint);
         }
         _results.push(lastParticle = particle);

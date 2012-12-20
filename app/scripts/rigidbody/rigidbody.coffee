@@ -4,14 +4,22 @@ class Particle
     @immovable = @settings.immovable
     @position = new THREE.Vector3(@settings.position.x, @settings.position.y, @settings.position.z)
     @oldPosition = @position.clone()
-    @accumulatedForce = new THREE.Vector3(0.0, 0.0, 0.0)
+    @accumulatedForce = new THREE.Vector3()
+    @addedForce = new THREE.Vector3()
   getMass: ->
     if @immovable then 0.0 else @settings.mass
   getInverseMass: ->
     if @immovable then 0.0 else 1/@getMass()
+  addForce: (force) ->
+    @addedForce.addSelf force
 
 class Constraint
   constructor: (@settings) ->
+    @p1 = @settings.p1
+    @p2 = @settings.p2
+    @strategy = @settings.strategy
+    @broken = @settings.broken
+    @breakFactor = @settings.breakFactor
 
 class RigidBody
   constructor: (@settings) ->
@@ -20,7 +28,7 @@ class RigidBody
     @constraints = []
     @step = 1.0
     @damping = 0.05
-    @iterations = 3
+    @iterations = 2
   addParticle: (particle, particleCallback) ->
     @particles[particle.settings.id] = particle
     @bodyScene.add particleCallback(particle)
@@ -48,15 +56,15 @@ class RigidBody
     @verlet()
     for i in [0...@iterations]
       @satisfyConstraints()
-    @constraintHack()
+    #@constraintHack()
   accumulateForces: ->
     gravityVector = new THREE.Vector3(@settings.gravity.x / 1000, @settings.gravity.y / 1000, @settings.gravity.z / 1000)
     if not @settings.gravity.enabled
       gravityVector = new THREE.Vector3()
 
     for k, p of @particles
-      p.accumulatedForce = gravityVector
-      #p.accumulatedForce.addSelf(new THREE.Vector3(0.0, -0.00000098, 0.0)) #@settings.gravity
+      p.accumulatedForce = (new THREE.Vector3()).add(p.addedForce, gravityVector)
+      p.addedForce = new THREE.Vector3()
   verlet: ->
     # Calc deltaTime powered by 2.
     step2 = @step * @step
@@ -83,6 +91,9 @@ class RigidBody
     # DEFAULT CONSTRAINT
 
     for c in @constraints
+      # Don't try to satisfy if constraint is broken
+      continue if c.broken
+
       # Dont try to satisfy if both particles are immovable
       continue if c.p1.immovable and c.p2.immovable
 
@@ -95,6 +106,10 @@ class RigidBody
       delta = new THREE.Vector3(0,0,0)
       delta.sub(x2, x1)
       deltalength = delta.length()
+
+      if c.strategy is 'break' and deltalength > c.length * c.breakFactor
+        c.broken = true
+
       diff = (deltalength - c.length) / (deltalength * (invmass1 + invmass2))
 
       displacement = delta.multiplyScalar(diff)
@@ -102,6 +117,7 @@ class RigidBody
       displacement2 = displacement.clone().multiplyScalar(invmass2)
       x1.addSelf(displacement1)
       x2.subSelf(displacement2)
+
   constraintHack: ->
     for k, p of @particles
       if p.position.y < 0

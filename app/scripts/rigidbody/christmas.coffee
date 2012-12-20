@@ -185,9 +185,10 @@ createScene = () ->
         letterParticle = new Particle particleSettings
         rigidbody.addParticle letterParticle, createParticle
 
-        constraint = new Constraint(null)
-        constraint.p1 = particle
-        constraint.p2 = letterParticle
+        constraintSettings =
+          p1: particle
+          p2: letterParticle
+        constraint = new Constraint constraintSettings
         rigidbody.addConstraint constraint, createCylinderConstraint
 
         text = tQuery.createText letters[letterId]
@@ -201,9 +202,10 @@ createScene = () ->
 
 
       if lastParticle?
-        constraint = new Constraint(null)
-        constraint.p1 = lastParticle
-        constraint.p2 = particle
+        constraintSettings =
+          p1: lastParticle
+          p2: particle
+        constraint = new Constraint constraintSettings
         rigidbody.addConstraint constraint, createCylinderConstraint
       lastParticle = particle
 

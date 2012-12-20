@@ -280,9 +280,15 @@ animate = ->
 
 render = ->
   parent.rotation.y += (targetRotation - parent.rotation.y) * 0.05
+  rotationDiff = (parent.rotation.y - targetRotation)
 
   #numConstraints = rigidbody.constraints.length
-  #rigidbody.constraints[Math.floor(Math.random()*numConstraints)].p1.position.y += 1
+  #rigidbody.constraints[Math.floor(Math.random()*numConstraints)].p1.addForce (new THREE.Vector3(0, 1, 0))
+
+  for k, p of rigidbody.particles
+    approxDistanceToCenter = p.position.x
+    p.addForce (new THREE.Vector3(0, rotationDiff / 200, -(approxDistanceToCenter * rotationDiff) / 10000 ))
+
   rigidbody?.calculate()
   for c in constraintObjects
     alignCylinderToParticles(c, c.p1, c.p2)
@@ -389,36 +395,43 @@ createScene = ->
 
     cylinder
 
-  createChristmasRope = (ropeId, startVector, endVector, letters) ->
+  createChristmasRope = (ropeId, startVector, endVector, letters, breakLetter) ->
     diff = (new THREE.Vector3()).sub(endVector, startVector)
     letterMargin = 3
     letterId = 0
-    segmentCount = letterMargin + letterMargin * letters.length + letterMargin
-    particleLetter = letterMargin + Math.ceil(letterMargin / 2)
+    startSegments = 1
+    endSegments = 1
+    segmentCount = startSegments + letterMargin * letters.length + endSegments
+    particleLetter = startSegments + Math.ceil(letterMargin / 2)
     particle = null
     lastParticle = null
     for i in [1..segmentCount]
-      posVector = (new THREE.Vector3()).add(startVector, diff.clone().multiplyScalar(i / segmentCount))
+      posVector = (new THREE.Vector3()).add(startVector, diff.clone().multiplyScalar((i-1) / (segmentCount-1)))
+      console.log posVector.x
       particleSettings =
         id: ropeId + 'particle' + i
         position: posVector
-        mass: 3.0
+        mass: 1.0
         immovable: (i is 1 or i is segmentCount)
       particle = new Particle particleSettings
       rigidbody.addParticle particle, createParticle
 
-      if i is particleLetter and i + Math.floor(letterMargin / 2) + letterMargin <= segmentCount
+      if i is particleLetter and i + Math.floor(letterMargin / 2) + endSegments <= segmentCount
         particleSettings =
           id: ropeId + 'particleLetter' + i
           position: (new THREE.Vector3()).add(posVector, new THREE.Vector3(0, -40, 0))
-          mass: 15.0
+          mass: 10.0
           immovable: false
         letterParticle = new Particle particleSettings
         rigidbody.addParticle letterParticle, createParticle
 
-        constraint = new Constraint(null)
-        constraint.p1 = particle
-        constraint.p2 = letterParticle
+        constraintSettings =
+          p1: particle
+          p2: letterParticle
+          strategy: if letterId is breakLetter then 'break' else 'default'
+          broken: false
+          breakFactor: 1.1
+        constraint = new Constraint constraintSettings
         rigidbody.addConstraint constraint, createCylinderConstraint
 
         letter = letters[letterId]
@@ -429,16 +442,16 @@ createScene = ->
         letterId++
         particleLetter += letterMargin
 
-
       if lastParticle?
-        constraint = new Constraint(null)
-        constraint.p1 = lastParticle
-        constraint.p2 = particle
+        constraintSettings =
+          p1: lastParticle
+          p2: particle
+        constraint = new Constraint constraintSettings
         rigidbody.addConstraint constraint, createCylinderConstraint
       lastParticle = particle
 
-  createChristmasRope 'first', (new THREE.Vector3(-300, 230, 0)), (new THREE.Vector3(300, 230, 0)), ['G', 'O', 'D']
-  createChristmasRope 'second', (new THREE.Vector3(-250, 100, 0)), (new THREE.Vector3(250, 100, 0)), ['J', 'U', 'L']
+  createChristmasRope 'first', (new THREE.Vector3(-320, 230, 0)), (new THREE.Vector3(320, 230, 0)), ['G', 'O', 'D', 'T'], 3
+  createChristmasRope 'second', (new THREE.Vector3(-300, 80, 0)), (new THREE.Vector3(300, 80, 0)), ['H', 'J', 'U', 'L'], 0
 
   parent.add rigidbody.getScene()
 
