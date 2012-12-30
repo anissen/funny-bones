@@ -45,8 +45,8 @@ class RigidBody
       @addParticle new Particle(p), particleCallback
     for c in data.rigidbody.constraint
       constraint = new Constraint(c)
-      constraint.p1 = @getParticle(c.settings.particle1)
-      constraint.p2 = @getParticle(c.settings.particle2)
+      constraint.p1 = @getParticle(c.particle1)
+      constraint.p2 = @getParticle(c.particle2)
       @addConstraint constraint, constraintCallback
   getScene: ->
     @bodyScene

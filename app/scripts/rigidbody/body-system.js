@@ -1,5 +1,5 @@
 (function() {
-  var GravitySettings, ParticleSettings, Settings, alignCylinderToParticles, constraintObjects, cylinder, cylinderMaterial, cylinderSelectedMaterial, dnd, gui, handleDnD, particleFolder, particleSettings, readJson, rigidbody, scene, selectedParticle, settings, sphereMaterial, sphereSelectedMaterial, v, world;
+  var GravitySettings, ParticleSettings, Settings, alignCylinderToParticles, constraintObjects, cylinder, cylinderMaterial, cylinderSelectedMaterial, dnd, getSphereMaterial, gui, handleDnD, particleFolder, particleSettings, readJson, rigidbody, scene, selectedParticle, settings, sphereImmovableMaterial, sphereMaterial, sphereSelectedMaterial, v, world;
 
   v = function(x, y, z) {
     return new THREE.Vector3(x, y, z);
@@ -70,6 +70,11 @@
     color: 0x0000FF
   });
 
+  sphereImmovableMaterial = new THREE.MeshLambertMaterial({
+    ambient: 0xFFFFFF,
+    color: 0xFFFFFF
+  });
+
   sphereSelectedMaterial = new THREE.MeshLambertMaterial({
     ambient: 0xFFFFFF,
     color: 0x00CC00
@@ -77,12 +82,20 @@
 
   cylinderMaterial = new THREE.MeshBasicMaterial({
     color: 0xFF0000,
-    opacity: 0.5
+    opacity: 0.6
   });
 
   cylinderSelectedMaterial = new THREE.MeshBasicMaterial({
     color: 0x00CC00
   });
+
+  getSphereMaterial = function(particle) {
+    if (particle.immovable) {
+      return sphereImmovableMaterial;
+    } else {
+      return sphereMaterial;
+    }
+  };
 
   readJson = function(data) {
     var createCylinderConstraint, createParticle, lineMat, radius, rings, segments;
@@ -100,20 +113,13 @@
       lineWidth: 1
     });
     createParticle = function(p) {
-      var sphereMesh;
-      sphereMesh = new THREE.Mesh(new THREE.SphereGeometry(radius, segments, rings), sphereMaterial);
+      var sphereGeometry, sphereMesh;
+      sphereGeometry = new THREE.SphereGeometry(radius, segments, rings);
+      sphereMesh = new THREE.Mesh(sphereGeometry, getSphereMaterial(p));
       sphereMesh.position = p.position;
+      sphereMesh.particle = p;
       return sphereMesh;
     };
-    /*
-      createLineConstraint = (c, p1, p2) ->
-        lineGeo = new THREE.Geometry()
-        lineGeo.vertices.push p1.position, p2.position
-        lineGeo.dynamic = true
-        constraintObjects.push lineGeo
-        new THREE.Line(lineGeo, lineMat)
-    */
-
     createCylinderConstraint = function(c, p1, p2) {
       var cylinderGeo, cylinderLength, cylinderRadius, length;
       length = p1.position.distanceTo(p2.position);
@@ -136,7 +142,7 @@
       if (event.target === selectedParticle) {
         return;
       }
-      return event.target.material = sphereMaterial;
+      return event.target.material = getSphereMaterial(event.target.particle);
     }).on('click', function(event) {
       if (selectedParticle != null) {
         selectedParticle.material = sphereMaterial;
@@ -153,12 +159,6 @@
       event.target.p1.position.y += 10;
       return event.target.p2.position.y += 10;
     });
-    /*
-      tQuery(world.tScene()).on('click', (event) ->
-        console.log('click on scene', event);
-      )
-    */
-
   };
 
   $(function() {
@@ -185,24 +185,6 @@
     cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
     cube.position.y += groundSize / 2;
     world.add(cube);
-    /*
-      lineLengthHalf = groundSize / 2
-      lineGeo = new THREE.Geometry()
-      lineGeo.vertices.push new THREE.Vector3(-lineLengthHalf, 0, 0),
-                            new THREE.Vector3(lineLengthHalf, 0, 0),
-                            new THREE.Vector3(0, -lineLengthHalf, 0),
-                            new THREE.Vector3(0, lineLengthHalf, 0),
-                            new THREE.Vector3(0, 0, -lineLengthHalf),
-                            new THREE.Vector3(0, 0, lineLengthHalf)
-      lineMat = new THREE.LineBasicMaterial(
-        color: 0x000000
-        lineWidth: 2
-      )
-      line = new THREE.Line(lineGeo, lineMat)
-      line.type = THREE.Lines
-      world.add line
-    */
-
     tQuery.createAmbientLight().addTo(world).color(0x444444);
     tQuery.createDirectionalLight().addTo(world).position(-1, 1, 1).color(0xFF88BB).intensity(3);
     tQuery.createDirectionalLight().addTo(world).position(1, 1, -1).color(0x4444FF).intensity(2);

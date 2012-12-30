@@ -92,8 +92,8 @@
       for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
         c = _ref1[_j];
         constraint = new Constraint(c);
-        constraint.p1 = this.getParticle(c.settings.particle1);
-        constraint.p2 = this.getParticle(c.settings.particle2);
+        constraint.p1 = this.getParticle(c.particle1);
+        constraint.p2 = this.getParticle(c.particle2);
         _results.push(this.addConstraint(constraint, constraintCallback));
       }
       return _results;

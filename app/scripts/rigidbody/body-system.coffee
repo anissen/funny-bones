@@ -58,6 +58,11 @@ sphereMaterial = new THREE.MeshLambertMaterial(
   color: 0x0000FF
 )
 
+sphereImmovableMaterial = new THREE.MeshLambertMaterial(
+  ambient: 0xFFFFFF
+  color: 0xFFFFFF
+)
+
 sphereSelectedMaterial = new THREE.MeshLambertMaterial(
   ambient: 0xFFFFFF
   color: 0x00CC00
@@ -65,12 +70,15 @@ sphereSelectedMaterial = new THREE.MeshLambertMaterial(
 
 cylinderMaterial = new THREE.MeshBasicMaterial(
   color: 0xFF0000
-  opacity: 0.5
+  opacity: 0.6
 )
 
 cylinderSelectedMaterial = new THREE.MeshBasicMaterial(
   color: 0x00CC00
 )
+
+getSphereMaterial = (particle) ->
+    if particle.immovable then sphereImmovableMaterial else sphereMaterial
 
 readJson = (data) ->
   if scene? then world.remove scene
@@ -78,7 +86,7 @@ readJson = (data) ->
   scene = new THREE.Scene()
   world.add scene
 
-  radius = 1.0 #0.015
+  radius = 1.0
   segments = 8
   rings = 8
 
@@ -89,25 +97,15 @@ readJson = (data) ->
   )
 
   createParticle = (p) ->
-    sphereMesh = new THREE.Mesh(
-      new THREE.SphereGeometry(radius, segments, rings),
-      sphereMaterial)
+    sphereGeometry = new THREE.SphereGeometry(radius, segments, rings)
+    sphereMesh = new THREE.Mesh(sphereGeometry, getSphereMaterial(p))
     sphereMesh.position = p.position
+    sphereMesh.particle = p
     sphereMesh
-
-  ###
-  createLineConstraint = (c, p1, p2) ->
-    lineGeo = new THREE.Geometry()
-    lineGeo.vertices.push p1.position, p2.position
-    lineGeo.dynamic = true
-    constraintObjects.push lineGeo
-    new THREE.Line(lineGeo, lineMat)
-  ###
 
   createCylinderConstraint = (c, p1, p2) ->
     length = p1.position.distanceTo(p2.position)
 
-    #THREE.CylinderGeometry = function ( radiusTop, radiusBottom, height, radiusSegments, heightSegments, openEnded )
     cylinderRadius = 0.5
     cylinderLength = length
     cylinderGeo = new THREE.CylinderGeometry(cylinderRadius, cylinderRadius, cylinderLength, 6, 1, false)
@@ -117,9 +115,7 @@ readJson = (data) ->
     constraintObjects.push cylinder
 
     alignCylinderToParticles(cylinder, p1, p2)
-
     cylinder
-
 
   rigidbody.load data, createParticle, createCylinderConstraint
   scene.add rigidbody.getScene()
@@ -133,18 +129,15 @@ readJson = (data) ->
     )
     .on('mouseout', (event) ->
       return if event.target is selectedParticle
-      event.target.material = sphereMaterial
+      event.target.material = getSphereMaterial event.target.particle
     )
     .on('click', (event) ->
-      #console.log event.target.position
-      #console.log particleSettings.x
       selectedParticle?.material = sphereMaterial
 
       selectedParticle = event.target
       selectedParticle.material = sphereSelectedMaterial
       particleFolder.open()
     )
-
 
   tQuery('cylinder')
     .on('mouseover', (event) ->
@@ -157,12 +150,6 @@ readJson = (data) ->
       event.target.p1.position.y += 10
       event.target.p2.position.y += 10
     )
-
-  ###
-  tQuery(world.tScene()).on('click', (event) ->
-    console.log('click on scene', event);
-  )
-  ###
 
 $ ->
   options =
@@ -185,25 +172,6 @@ $ ->
   cube.position.y += groundSize / 2
   world.add cube
 
-
-  ###
-  lineLengthHalf = groundSize / 2
-  lineGeo = new THREE.Geometry()
-  lineGeo.vertices.push new THREE.Vector3(-lineLengthHalf, 0, 0),
-                        new THREE.Vector3(lineLengthHalf, 0, 0),
-                        new THREE.Vector3(0, -lineLengthHalf, 0),
-                        new THREE.Vector3(0, lineLengthHalf, 0),
-                        new THREE.Vector3(0, 0, -lineLengthHalf),
-                        new THREE.Vector3(0, 0, lineLengthHalf)
-  lineMat = new THREE.LineBasicMaterial(
-    color: 0x000000
-    lineWidth: 2
-  )
-  line = new THREE.Line(lineGeo, lineMat)
-  line.type = THREE.Lines
-  world.add line
-  ###
-
   tQuery.createAmbientLight().addTo(world).color 0x444444
   tQuery.createDirectionalLight().addTo(world).position(-1, 1, 1).color(0xFF88BB).intensity 3
   tQuery.createDirectionalLight().addTo(world).position(1, 1, -1).color(0x4444FF).intensity 2
@@ -222,11 +190,7 @@ $ ->
       controller.updateDisplay()
   )
 
-  #world.add tQuery.createText("G").scaleBy(10)
-
   world.start()
-
-
 
   $.ajax(
     url: 'data/rigidbodies/hitman.json',
@@ -255,7 +219,6 @@ $ ->
 
 handleDnD = (files) ->
   f = files[0]
-  #alert "Not a JSON file!"  unless f.type.match("application/json")
   reader = new FileReader()
   reader.onloadend = (e) ->
     result = JSON.parse(@result)
