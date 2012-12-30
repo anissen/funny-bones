@@ -39,6 +39,7 @@ class RigidBody
     constraint.length = constraint.p1.position.distanceTo(constraint.p2.position)
     @bodyScene.add constraintCallback(constraint, constraint.p1, constraint.p2)
   load: (data, particleCallback, constraintCallback) ->
+    @bodyScene = new THREE.Scene()
     @particles = {}
     @constraints = []
     for p in data.rigidbody.particle
@@ -56,7 +57,7 @@ class RigidBody
     @verlet()
     for i in [0...@iterations]
       @satisfyConstraints()
-    #@constraintHack()
+    @constraintHack()
   accumulateForces: ->
     gravityVector = new THREE.Vector3(@settings.gravity.x / 1000, @settings.gravity.y / 1000, @settings.gravity.z / 1000)
     if not @settings.gravity.enabled

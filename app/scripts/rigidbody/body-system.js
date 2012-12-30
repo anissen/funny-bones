@@ -1,5 +1,5 @@
 (function() {
-  var GravitySettings, ParticleSettings, Settings, alignCylinderToParticles, constraintObjects, cylinder, cylinderMaterial, cylinderSelectedMaterial, dnd, getSphereMaterial, gui, handleDnD, particleFolder, particleSettings, readJson, rigidbody, scene, selectedParticle, settings, sphereImmovableMaterial, sphereMaterial, sphereSelectedMaterial, v, world;
+  var GravitySettings, ParticleSettings, Settings, alignCylinderToParticles, constraintObjects, cylinder, cylinderMaterial, cylinderSelectedMaterial, dnd, getSphereMaterial, gui, handleDnD, loadFile, particleFolder, particleSettings, readJson, rigidbody, scene, selectedParticle, settings, sphereImmovableMaterial, sphereMaterial, sphereSelectedMaterial, v, world;
 
   v = function(x, y, z) {
     return new THREE.Vector3(x, y, z);
@@ -13,11 +13,32 @@
   };
 
   Settings = function() {
+    var loadModel;
     this.gravity = new GravitySettings();
     this.explode = function() {
       return alert('Bang!');
     };
-    this.running = false;
+    this.running = true;
+    loadModel = function(filename) {
+      return $.ajax({
+        url: 'data/rigidbodies/' + filename + '.json',
+        dataType: 'JSON',
+        type: 'GET'
+      }).done(function(data) {
+        return readJson(data);
+      }).fail(function(err) {
+        return alert('Error!!1! ' + err);
+      });
+    };
+    this.loadHitman = function() {
+      return loadModel('hitman');
+    };
+    this.loadBox = function() {
+      return loadModel('box');
+    };
+    this.loadBridge = function() {
+      return loadModel('bridge');
+    };
     return this;
   };
 
@@ -135,7 +156,6 @@
     };
     rigidbody.load(data, createParticle, createCylinderConstraint);
     scene.add(rigidbody.getScene());
-    world.enableDomEvent();
     tQuery('sphere').on('mouseover', function(event) {
       return event.target.material = sphereSelectedMaterial;
     }).on('mouseout', function(event) {
@@ -162,7 +182,7 @@
   };
 
   $(function() {
-    var cube, cubeGeometry, cubeMaterial, gravityFolder, groundGeo, groundMesh, groundSize, options, optionsFolder, tiles;
+    var cube, cubeGeometry, cubeMaterial, gravityFolder, groundGeo, groundMesh, groundSize, modelFolder, options, optionsFolder, tiles;
     options = {
       cameraControls: true,
       stats: false
@@ -211,6 +231,7 @@
       return _results;
     });
     world.start();
+    world.enableDomEvent();
     $.ajax({
       url: 'data/rigidbodies/hitman.json',
       dataType: 'JSON',
@@ -224,6 +245,11 @@
     optionsFolder = gui.addFolder('Options');
     optionsFolder.add(settings, 'running');
     optionsFolder.open();
+    modelFolder = gui.addFolder('Model');
+    modelFolder.add(settings, 'loadHitman').name('load hitman model');
+    modelFolder.add(settings, 'loadBox').name('load box model');
+    modelFolder.add(settings, 'loadBridge').name('load bridge model');
+    modelFolder.open();
     gravityFolder = gui.addFolder('Gravity');
     gravityFolder.add(settings.gravity, 'enabled');
     gravityFolder.add(settings.gravity, 'x', -20.0, 20.0).step(0.1);
@@ -242,16 +268,20 @@
     });
   });
 
-  handleDnD = function(files) {
-    var f, reader;
-    f = files[0];
+  loadFile = function(file) {
+    var reader;
+    console.log(file);
     reader = new FileReader();
     reader.onloadend = function(e) {
       var result;
       result = JSON.parse(this.result);
       return readJson(result);
     };
-    return reader.readAsText(f);
+    return reader.readAsText(file);
+  };
+
+  handleDnD = function(files) {
+    return loadFile(files[0]);
   };
 
   dnd = new DnDFileController("body", handleDnD);

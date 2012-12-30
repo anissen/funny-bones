@@ -10,7 +10,19 @@ GravitySettings = ->
 Settings = ->
   @gravity = new GravitySettings()
   @explode = -> alert 'Bang!'
-  @running = false
+  @running = true
+  #@model = null
+  loadModel = (filename) ->
+    $.ajax(
+      url: 'data/rigidbodies/' + filename + '.json',
+      dataType: 'JSON',
+      type: 'GET'
+    )
+    .done((data) -> readJson(data))
+    .fail((err) -> alert('Error!!1! ' + err))
+  @loadHitman = -> loadModel 'hitman'
+  @loadBox = -> loadModel 'box'
+  @loadBridge = -> loadModel 'bridge'
   @
 
 ParticleSettings = ->
@@ -120,8 +132,6 @@ readJson = (data) ->
   rigidbody.load data, createParticle, createCylinderConstraint
   scene.add rigidbody.getScene()
 
-  world.enableDomEvent()
-
   # bind some event on it
   tQuery('sphere')
     .on('mouseover', (event) ->
@@ -191,6 +201,7 @@ $ ->
   )
 
   world.start()
+  world.enableDomEvent()
 
   $.ajax(
     url: 'data/rigidbodies/hitman.json',
@@ -205,6 +216,13 @@ $ ->
   optionsFolder.add settings, 'running'
   optionsFolder.open()
 
+  modelFolder = gui.addFolder('Model')
+  #modelFolder.add(settings, 'model', [ 'hitman', 'box', 'bridge' ]).onChange((value) -> loadFile('data/rigidbodies/' + value + '.json'))
+  modelFolder.add(settings, 'loadHitman').name 'load hitman model'
+  modelFolder.add(settings, 'loadBox').name 'load box model'
+  modelFolder.add(settings, 'loadBridge').name 'load bridge model'
+  modelFolder.open()
+
   gravityFolder = gui.addFolder('Gravity')
   gravityFolder.add settings.gravity, 'enabled'
   gravityFolder.add(settings.gravity, 'x', -20.0, 20.0).step(0.1)
@@ -217,13 +235,15 @@ $ ->
   particleFolder.add(particleSettings, 'y').onChange((value) -> selectedParticle?.position.y = value)
   particleFolder.add(particleSettings, 'z').onChange((value) -> selectedParticle?.position.z = value)
 
-handleDnD = (files) ->
-  f = files[0]
+loadFile = (file) ->
+  console.log file
   reader = new FileReader()
   reader.onloadend = (e) ->
     result = JSON.parse(@result)
     readJson result
+  reader.readAsText file
 
-  reader.readAsText f
+handleDnD = (files) ->
+  loadFile files[0]
 
 dnd = new DnDFileController "body", handleDnD

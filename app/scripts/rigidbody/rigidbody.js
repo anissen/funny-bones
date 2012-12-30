@@ -80,6 +80,7 @@
 
     RigidBody.prototype.load = function(data, particleCallback, constraintCallback) {
       var c, constraint, p, _i, _j, _len, _len1, _ref, _ref1, _results;
+      this.bodyScene = new THREE.Scene();
       this.particles = {};
       this.constraints = [];
       _ref = data.rigidbody.particle;
@@ -104,17 +105,16 @@
     };
 
     RigidBody.prototype.calculate = function() {
-      var i, _i, _ref, _results;
+      var i, _i, _ref;
       if (!this.settings.running) {
         return;
       }
       this.accumulateForces();
       this.verlet();
-      _results = [];
       for (i = _i = 0, _ref = this.iterations; 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i) {
-        _results.push(this.satisfyConstraints());
+        this.satisfyConstraints();
       }
-      return _results;
+      return this.constraintHack();
     };
 
     RigidBody.prototype.accumulateForces = function() {
